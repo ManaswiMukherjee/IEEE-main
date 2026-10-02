@@ -1,0 +1,72 @@
+PURPOSE:
+Determine which available power source should currently supply
+an area's electricity demand, while maximizing renewable-energy
+usage and minimizing unnecessary grid usage.
+
+RUNS ON:
+ESP32 / Edge device
+
+INPUT:
+- Current weather conditions
+    - Temperature
+    - Humidity
+    - Cloud cover
+    - Solar irradiance
+    - Wind speed
+    - Rainfall, if relevant
+- Time information
+    - Hour
+    - Day
+    - Month/season
+- Current power-source state
+    - Solar generation/availability
+    - Wind generation/availability
+    - Grid availability
+    - Battery state, if present
+- Current/estimated electricity demand
+- Optional energy prices / carbon intensity
+
+PROCESS:
+Analyze the current environmental and energy state and determine
+which energy source or combination of sources should be used.
+
+The decision should consider:
+- Renewable energy availability
+- Current power demand
+- Grid dependency
+- Battery state
+- Renewable-energy wastage
+- Estimated environmental impact
+- Reliability of each source
+
+OUTPUT:
+A machine-readable energy decision, for example:
+
+{
+    "solar": 0.85,
+    "wind": 0.42,
+    "grid": 0.15,
+    "battery": 0.60,
+    "selected_source": "solar"
+}
+
+TYPE:
+Edge ML / optimization / intelligent controller
+
+IMPORTANT:
+The objective is NOT simply "always use renewable energy".
+The controller must choose the source that satisfies demand while
+optimizing sustainability and system reliability.
+
+EXAMPLE:
+High sunlight + sufficient solar generation + moderate demand
+        ↓
+Solar selected
+
+Cloudy + strong wind + sufficient wind generation
+        ↓
+Wind selected
+
+Low renewable generation + high demand
+        ↓
+Grid/battery used as required

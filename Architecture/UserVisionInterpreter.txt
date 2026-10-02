@@ -1,0 +1,79 @@
+PURPOSE:
+Allow a human to describe what they want their future city to be
+like in natural language and convert that vision into a
+structured format that the city-planning system can understand.
+
+TYPE:
+LLM / Natural Language → Structured Data
+
+INPUT:
+1. User's natural-language vision
+
+Example:
+"I want a highly walkable coastal city for 100,000 people
+with strong public transportation, lots of green space and
+maximum use of solar and wind energy."
+
+2. Mandatory structured information supplied by the application
+
+Example:
+- Population
+- Area
+- Geographic coordinates
+- Terrain
+- Climate
+- Existing infrastructure
+- Development restrictions
+- Other required parameters
+
+PROCESS:
+The LLM interprets the user's intent and combines it with the
+mandatory application data.
+
+It converts vague human requirements into explicit,
+machine-readable requirements.
+
+OUTPUT:
+A fixed structured schema, for example:
+
+{
+    "population": 100000,
+
+    "urban_density": "medium_high",
+
+    "transport": {
+        "public_transport_priority": "high",
+        "walkability": "high"
+    },
+
+    "environment": {
+        "green_space_priority": "high"
+    },
+
+    "energy": {
+        "renewable_priority": "high",
+        "preferred_sources": [
+            "solar",
+            "wind"
+        ]
+    }
+}
+
+TYPE:
+LLM interface layer
+
+IMPORTANT:
+This subsystem is NOT responsible for designing the city.
+
+Its job is:
+
+HUMAN VISION
+     ↓
+UNDERSTANDING
+     ↓
+FORMAL REQUIREMENTS
+
+The actual city planning happens in Subsystem 3.
+
+The output schema must be strictly defined because Subsystem 3
+will consume this output automatically.

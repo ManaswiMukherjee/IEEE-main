@@ -1,0 +1,76 @@
+============================================================
+SUSTAINABLE CITY SYSTEM — COMPLETE PIPELINE
+============================================================
+
+                 USER
+                  │
+                  │ Natural-language vision
+                  ▼
+        ┌──────────────────────┐
+        │ SUBSYSTEM 2          │
+        │ AI URBAN VISION      │
+        │ INTERPRETER          │
+        └──────────┬───────────┘
+                   │
+                   │ Structured requirements
+                   ▼
+        ┌──────────────────────┐
+        │ SUBSYSTEM 3          │
+        │ SUSTAINABLE CITY     │
+        │ PLANNER              │
+        └──────────┬───────────┘
+                   │
+                   │ Machine-readable city plan
+                   ▼
+        ┌──────────────────────┐
+        │ SUBSYSTEM 4          │
+        │ 3D CITY GENERATOR    │
+        └──────────┬───────────┘
+                   │
+                   ▼
+             INTERACTIVE
+              3D CITY
+
+
+Separately / integrated with the planned city:
+
+        WEATHER ──────────────┐
+        CLIMATE ──────────────┤
+        TIME ─────────────────┤
+        SOLAR STATUS ─────────┤
+        WIND STATUS ──────────┤
+        GRID STATUS ──────────┤
+        POWER DEMAND ─────────┤
+                              ▼
+                    ┌──────────────────┐
+                    │ SUBSYSTEM 1      │
+                    │ SMART ENERGY     │
+                    │ CONTROLLER       │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                          ESP32
+                             │
+                    ┌────────┼────────┐
+                    ▼        ▼        ▼
+                  SOLAR    WIND     GRID
+============================================================
+
+CORE DATA FLOW:
+
+Human Vision
+     ↓
+Structured Requirements
+     ↓
+Sustainable City Plan
+     ↓
+3D City
+
+AND:
+
+Environmental + Energy State
+     ↓
+Energy Decision
+     ↓
+ESP32 Energy Control
+============================================================

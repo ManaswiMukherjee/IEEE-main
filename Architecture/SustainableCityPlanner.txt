@@ -1,0 +1,102 @@
+PURPOSE:
+Generate a machine-readable plan for how a city should be
+organized within a given geographic area while satisfying the
+user's requirements and maximizing sustainability.
+
+INPUT:
+1. Structured requirements from Subsystem 2
+2. Geographic information
+    - Terrain
+    - Elevation
+    - Land availability
+    - Water bodies
+    - Existing roads
+    - Existing infrastructure
+    - Restricted/protected areas
+
+3. Environmental information
+    - Solar potential
+    - Wind potential
+    - Climate
+    - Temperature
+    - Rainfall
+    - Other relevant environmental factors
+
+4. Population / development requirements
+
+5. Renewable-energy requirements
+
+PROCESS:
+Generate and evaluate possible city layouts while respecting
+physical and logical constraints.
+
+The planner should determine suitable locations for things such as:
+
+- Residential areas
+- Commercial areas
+- Industrial areas
+- Roads
+- Public transportation
+- Parks / green areas
+- Water infrastructure
+- Solar installations
+- Wind installations
+- Other required infrastructure
+
+The planner should optimize for objectives such as:
+
+- Renewable-energy utilization
+- Low grid dependency
+- Reduced transportation distance
+- Walkability
+- Green-space availability
+- Infrastructure efficiency
+- Environmental impact
+- Population capacity
+- Geographic suitability
+
+HARD CONSTRAINTS:
+Examples:
+- Buildings cannot overlap
+- Infrastructure cannot be placed in restricted areas
+- Roads must remain connected
+- Population capacity must be sufficient
+- Required infrastructure must be reachable
+- Renewable infrastructure must be placed in suitable locations
+
+OUTPUT:
+A standardized machine-readable CITY PLAN.
+
+Example:
+
+{
+    "buildings": [...],
+    "roads": [...],
+    "residential_zones": [...],
+    "commercial_zones": [...],
+    "parks": [...],
+    "solar_farms": [...],
+    "wind_farms": [...],
+    "water_infrastructure": [...],
+    "public_transport": [...]
+}
+
+TYPE:
+Optimization / procedural planning / potentially ML-assisted
+
+IMPORTANT:
+This subsystem should NOT directly generate a 3D scene.
+
+Its job is to produce the logical structure of the city.
+
+CITY REQUIREMENTS
+        +
+GEOGRAPHY
+        +
+CLIMATE
+        +
+ENERGY POTENTIAL
+        ↓
+CITY PLANNER
+        ↓
+MACHINE-READABLE CITY PLAN
