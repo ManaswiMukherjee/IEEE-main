@@ -1,0 +1,298 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://your-project.dev/schemas/city-plan.schema.json",
+    "title": "Sustainable City Plan",
+    "description": "Structured representation of a procedurally generated sustainable city.",
+    "type": "object",
+
+    "required": ["city", "terrain", "sectors", "road_graph", "energy_zones", "environment"],
+
+    "properties": {
+        "city": {
+            "type": "object",
+            "required": ["name", "seed", "dimensions", "population_target"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "seed": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "dimensions": {
+                    "type": "array",
+                    "prefixItems": [
+                        {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2
+                },
+                "population_target": {
+                    "type": "integer",
+                    "minimum": 1
+                }
+            },
+            "additionalProperties": false
+        },
+
+        "terrain": {
+            "type": "object",
+            "required": ["type", "height_scale"],
+
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["flat", "rolling", "hilly", "mountainous"]
+                },
+
+                "height_scale": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            },
+
+            "additionalProperties": false
+        },
+
+        "sectors": {
+            "type": "array",
+            "minItems": 1,
+
+            "items": {
+                "type": "object",
+
+                "required": ["id", "type", "bounds"],
+
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "pattern": "^[a-zA-Z0-9_-]+$"
+                    },
+
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "residential",
+                            "commercial",
+                            "industrial",
+                            "civic",
+                            "mixed",
+                            "green",
+                            "energy",
+                            "transport"
+                        ]
+                    },
+
+                    "bounds": {
+                        "type": "array",
+                        "prefixItems": [
+                            { "type": "number" },
+                            { "type": "number" },
+                            { "type": "number" },
+                            { "type": "number" }
+                        ],
+                        "minItems": 4,
+                        "maxItems": 4
+                    },
+
+                    "density": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                    },
+
+                    "building_height": {
+                        "type": "array",
+                        "prefixItems": [
+                            {
+                                "type": "number",
+                                "minimum": 1
+                            },
+                            {
+                                "type": "number",
+                                "minimum": 1
+                            }
+                        ],
+                        "minItems": 2,
+                        "maxItems": 2
+                    },
+
+                    "population_target": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+
+                "additionalProperties": false
+            }
+        },
+
+        "road_graph": {
+            "type": "object",
+
+            "required": ["nodes", "edges"],
+
+            "properties": {
+                "nodes": {
+                    "type": "array",
+
+                    "items": {
+                        "type": "object",
+
+                        "required": ["id", "position"],
+
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+
+                            "position": {
+                                "type": "array",
+                                "prefixItems": [{ "type": "number" }, { "type": "number" }],
+                                "minItems": 2,
+                                "maxItems": 2
+                            }
+                        },
+
+                        "additionalProperties": false
+                    }
+                },
+
+                "edges": {
+                    "type": "array",
+
+                    "items": {
+                        "type": "object",
+
+                        "required": ["id", "from", "to", "type"],
+
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+
+                            "from": {
+                                "type": "string"
+                            },
+
+                            "to": {
+                                "type": "string"
+                            },
+
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "highway",
+                                    "arterial",
+                                    "collector",
+                                    "local",
+                                    "pedestrian",
+                                    "cycle"
+                                ]
+                            },
+
+                            "width": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            }
+                        },
+
+                        "additionalProperties": false
+                    }
+                }
+            },
+
+            "additionalProperties": false
+        },
+
+        "energy_zones": {
+            "type": "array",
+
+            "items": {
+                "type": "object",
+
+                "required": ["id", "type", "sector", "capacity"],
+
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+
+                    "type": {
+                        "type": "string",
+                        "enum": ["solar", "wind", "hydro", "battery", "grid", "substation"]
+                    },
+
+                    "sector": {
+                        "type": "string"
+                    },
+
+                    "capacity": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+
+                    "unit": {
+                        "type": "string",
+                        "enum": ["MW", "MWh"]
+                    }
+                },
+
+                "additionalProperties": false
+            }
+        },
+
+        "environment": {
+            "type": "object",
+
+            "required": ["minimum_green_ratio"],
+
+            "properties": {
+                "minimum_green_ratio": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                },
+
+                "water_bodies": {
+                    "type": "array",
+
+                    "items": {
+                        "type": "object",
+
+                        "required": ["id", "bounds"],
+
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+
+                            "bounds": {
+                                "type": "array",
+                                "minItems": 4,
+                                "maxItems": 4,
+                                "items": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+
+                        "additionalProperties": false
+                    }
+                }
+            },
+
+            "additionalProperties": false
+        }
+    },
+
+    "additionalProperties": false
+}
