@@ -1,0 +1,542 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "city": {
+        "name": "Verdant Arc",
+        "seed": 184729,
+        "dimensions": [6000, 6000],
+        "population_target": 150000
+    },
+
+    "terrain": {
+        "type": "rolling",
+        "height_scale": 22
+    },
+
+    "sectors": [
+        {
+            "id": "central_mixed_core",
+            "type": "mixed",
+            "bounds": [2350, 2350, 1300, 1200],
+            "density": 0.88,
+            "building_height": [8, 24],
+            "population_target": 26000
+        },
+
+        {
+            "id": "north_residential",
+            "type": "residential",
+            "bounds": [1800, 3700, 1700, 1300],
+            "density": 0.72,
+            "building_height": [5, 14],
+            "population_target": 22000
+        },
+
+        {
+            "id": "northeast_residential",
+            "type": "residential",
+            "bounds": [3650, 3650, 1350, 1200],
+            "density": 0.68,
+            "building_height": [4, 12],
+            "population_target": 18000
+        },
+
+        {
+            "id": "west_residential",
+            "type": "residential",
+            "bounds": [450, 2500, 1650, 1400],
+            "density": 0.65,
+            "building_height": [3, 10],
+            "population_target": 17000
+        },
+
+        {
+            "id": "south_residential",
+            "type": "residential",
+            "bounds": [1850, 650, 1600, 1250],
+            "density": 0.7,
+            "building_height": [4, 12],
+            "population_target": 19000
+        },
+
+        {
+            "id": "southeast_residential",
+            "type": "residential",
+            "bounds": [3650, 900, 1350, 1250],
+            "density": 0.62,
+            "building_height": [4, 11],
+            "population_target": 16000
+        },
+
+        {
+            "id": "commercial_district",
+            "type": "commercial",
+            "bounds": [3700, 2350, 950, 950],
+            "density": 0.82,
+            "building_height": [8, 22],
+            "population_target": 6000
+        },
+
+        {
+            "id": "innovation_district",
+            "type": "commercial",
+            "bounds": [1300, 3850, 900, 850],
+            "density": 0.74,
+            "building_height": [6, 16],
+            "population_target": 5000
+        },
+
+        {
+            "id": "industrial_east",
+            "type": "industrial",
+            "bounds": [5050, 2200, 800, 1500],
+            "density": 0.48,
+            "building_height": [3, 9],
+            "population_target": 2500
+        },
+
+        {
+            "id": "civic_campus",
+            "type": "civic",
+            "bounds": [1650, 2150, 650, 650],
+            "density": 0.45,
+            "building_height": [3, 10],
+            "population_target": 4500
+        },
+
+        {
+            "id": "main_city_park",
+            "type": "green",
+            "bounds": [650, 4200, 950, 1250],
+            "density": 0.02,
+            "building_height": [1, 2],
+            "population_target": 0
+        },
+
+        {
+            "id": "central_green_corridor",
+            "type": "green",
+            "bounds": [2850, 950, 550, 1250],
+            "density": 0.03,
+            "building_height": [1, 2],
+            "population_target": 0
+        },
+
+        {
+            "id": "east_greenbelt",
+            "type": "green",
+            "bounds": [4650, 3900, 950, 1500],
+            "density": 0.015,
+            "building_height": [1, 2],
+            "population_target": 0
+        },
+
+        {
+            "id": "riverfront_park",
+            "type": "green",
+            "bounds": [500, 950, 1100, 650],
+            "density": 0.01,
+            "building_height": [1, 2],
+            "population_target": 0
+        },
+
+        {
+            "id": "solar_energy_park",
+            "type": "energy",
+            "bounds": [4950, 4850, 850, 850],
+            "density": 0.12,
+            "building_height": [2, 5],
+            "population_target": 0
+        },
+
+        {
+            "id": "transit_hub",
+            "type": "transport",
+            "bounds": [2650, 1550, 700, 500],
+            "density": 0.38,
+            "building_height": [2, 7],
+            "population_target": 1000
+        }
+    ],
+
+    "road_graph": {
+        "nodes": [
+            {
+                "id": "central",
+                "position": [3000, 3000]
+            },
+            {
+                "id": "north_core",
+                "position": [3000, 4300]
+            },
+            {
+                "id": "south_core",
+                "position": [3000, 1650]
+            },
+            {
+                "id": "west_core",
+                "position": [1550, 3000]
+            },
+            {
+                "id": "east_core",
+                "position": [4550, 3000]
+            },
+
+            {
+                "id": "northwest",
+                "position": [1450, 4300]
+            },
+            {
+                "id": "northeast",
+                "position": [4350, 4250]
+            },
+            {
+                "id": "southwest",
+                "position": [1450, 1450]
+            },
+            {
+                "id": "southeast",
+                "position": [4350, 1500]
+            },
+
+            {
+                "id": "industrial",
+                "position": [5350, 2950]
+            },
+            {
+                "id": "energy",
+                "position": [5350, 5300]
+            },
+            {
+                "id": "park_north",
+                "position": [1100, 4800]
+            },
+            {
+                "id": "park_south",
+                "position": [1050, 1250]
+            },
+
+            {
+                "id": "transit",
+                "position": [3000, 1800]
+            },
+            {
+                "id": "civic",
+                "position": [1950, 2400]
+            },
+            {
+                "id": "commercial",
+                "position": [4200, 2700]
+            },
+            {
+                "id": "innovation",
+                "position": [1750, 4250]
+            }
+        ],
+
+        "edges": [
+            {
+                "id": "arterial_north",
+                "from": "central",
+                "to": "north_core",
+                "type": "arterial",
+                "width": 18
+            },
+            {
+                "id": "arterial_south",
+                "from": "central",
+                "to": "south_core",
+                "type": "arterial",
+                "width": 18
+            },
+            {
+                "id": "arterial_west",
+                "from": "central",
+                "to": "west_core",
+                "type": "arterial",
+                "width": 18
+            },
+            {
+                "id": "arterial_east",
+                "from": "central",
+                "to": "east_core",
+                "type": "arterial",
+                "width": 18
+            },
+
+            {
+                "id": "arterial_northwest",
+                "from": "north_core",
+                "to": "northwest",
+                "type": "arterial",
+                "width": 15
+            },
+            {
+                "id": "arterial_northeast",
+                "from": "north_core",
+                "to": "northeast",
+                "type": "arterial",
+                "width": 15
+            },
+            {
+                "id": "arterial_southwest",
+                "from": "south_core",
+                "to": "southwest",
+                "type": "arterial",
+                "width": 15
+            },
+            {
+                "id": "arterial_southeast",
+                "from": "south_core",
+                "to": "southeast",
+                "type": "arterial",
+                "width": 15
+            },
+
+            {
+                "id": "arterial_industrial",
+                "from": "east_core",
+                "to": "industrial",
+                "type": "arterial",
+                "width": 16
+            },
+
+            {
+                "id": "collector_north_loop",
+                "from": "northwest",
+                "to": "northeast",
+                "type": "collector",
+                "width": 11
+            },
+            {
+                "id": "collector_south_loop",
+                "from": "southwest",
+                "to": "southeast",
+                "type": "collector",
+                "width": 11
+            },
+            {
+                "id": "collector_west_loop",
+                "from": "northwest",
+                "to": "southwest",
+                "type": "collector",
+                "width": 11
+            },
+            {
+                "id": "collector_east_loop",
+                "from": "northeast",
+                "to": "southeast",
+                "type": "collector",
+                "width": 11
+            },
+
+            {
+                "id": "collector_commercial",
+                "from": "east_core",
+                "to": "commercial",
+                "type": "collector",
+                "width": 12
+            },
+            {
+                "id": "collector_civic",
+                "from": "west_core",
+                "to": "civic",
+                "type": "collector",
+                "width": 10
+            },
+            {
+                "id": "collector_transit",
+                "from": "south_core",
+                "to": "transit",
+                "type": "collector",
+                "width": 12
+            },
+            {
+                "id": "collector_innovation",
+                "from": "north_core",
+                "to": "innovation",
+                "type": "collector",
+                "width": 10
+            },
+
+            {
+                "id": "collector_energy",
+                "from": "southeast",
+                "to": "energy",
+                "type": "collector",
+                "width": 11
+            },
+
+            {
+                "id": "local_civic_central",
+                "from": "civic",
+                "to": "central",
+                "type": "local",
+                "width": 8
+            },
+            {
+                "id": "local_central_commercial",
+                "from": "central",
+                "to": "commercial",
+                "type": "local",
+                "width": 8
+            },
+            {
+                "id": "local_industrial_energy",
+                "from": "industrial",
+                "to": "energy",
+                "type": "local",
+                "width": 8
+            },
+            {
+                "id": "local_park_north",
+                "from": "northwest",
+                "to": "park_north",
+                "type": "local",
+                "width": 7
+            },
+            {
+                "id": "local_park_south",
+                "from": "southwest",
+                "to": "park_south",
+                "type": "local",
+                "width": 7
+            },
+
+            {
+                "id": "cycle_north_south",
+                "from": "north_core",
+                "to": "south_core",
+                "type": "cycle",
+                "width": 3
+            },
+            {
+                "id": "cycle_west_east",
+                "from": "west_core",
+                "to": "east_core",
+                "type": "cycle",
+                "width": 3
+            },
+            {
+                "id": "cycle_northwest_northeast",
+                "from": "northwest",
+                "to": "northeast",
+                "type": "cycle",
+                "width": 3
+            },
+            {
+                "id": "cycle_southwest_southeast",
+                "from": "southwest",
+                "to": "southeast",
+                "type": "cycle",
+                "width": 3
+            },
+
+            {
+                "id": "pedestrian_park_central",
+                "from": "park_north",
+                "to": "central",
+                "type": "pedestrian",
+                "width": 4
+            },
+            {
+                "id": "pedestrian_civic_transit",
+                "from": "civic",
+                "to": "transit",
+                "type": "pedestrian",
+                "width": 4
+            },
+            {
+                "id": "pedestrian_commercial_central",
+                "from": "commercial",
+                "to": "central",
+                "type": "pedestrian",
+                "width": 4
+            }
+        ]
+    },
+
+    "energy_zones": [
+        {
+            "id": "solar_energy_park",
+            "type": "solar",
+            "sector": "solar_energy_park",
+            "capacity": 65,
+            "unit": "MW"
+        },
+        {
+            "id": "solar_rooftop_core",
+            "type": "solar",
+            "sector": "central_mixed_core",
+            "capacity": 35,
+            "unit": "MW"
+        },
+        {
+            "id": "solar_industrial",
+            "type": "solar",
+            "sector": "industrial_east",
+            "capacity": 20,
+            "unit": "MW"
+        },
+        {
+            "id": "solar_residential_north",
+            "type": "solar",
+            "sector": "north_residential",
+            "capacity": 18,
+            "unit": "MW"
+        },
+        {
+            "id": "wind_east",
+            "type": "wind",
+            "sector": "east_greenbelt",
+            "capacity": 30,
+            "unit": "MW"
+        },
+        {
+            "id": "battery_central",
+            "type": "battery",
+            "sector": "solar_energy_park",
+            "capacity": 90,
+            "unit": "MWh"
+        },
+        {
+            "id": "battery_transit",
+            "type": "battery",
+            "sector": "transit_hub",
+            "capacity": 30,
+            "unit": "MWh"
+        },
+        {
+            "id": "main_substation",
+            "type": "substation",
+            "sector": "central_mixed_core",
+            "capacity": 180,
+            "unit": "MW"
+        },
+        {
+            "id": "industrial_substation",
+            "type": "substation",
+            "sector": "industrial_east",
+            "capacity": 70,
+            "unit": "MW"
+        }
+    ],
+
+    "environment": {
+        "minimum_green_ratio": 0.32,
+
+        "water_bodies": [
+            {
+                "id": "southwest_lake",
+                "bounds": [350, 350, 1050, 500]
+            },
+            {
+                "id": "northeast_reservoir",
+                "bounds": [4700, 4500, 850, 550]
+            },
+            {
+                "id": "east_wetland",
+                "bounds": [5100, 3900, 600, 450]
+            }
+        ]
+    }
+}
