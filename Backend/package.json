@@ -1,10 +1,12 @@
 {
-  "name": "backend",
+  "name": "sustainable-city-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend for AI-powered sustainable city planning platform",
+  "main": "App/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node App/server.js",
+    "dev": "nodemon App/server.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [],
   "type": "commonjs",
