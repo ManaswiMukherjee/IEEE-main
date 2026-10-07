@@ -1,0 +1,87 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class FreeFlyCamera : MonoBehaviour
+{
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 80f;
+    [SerializeField] private float fastSpeed = 200f;
+
+    [Header("Mouse Look")]
+    [SerializeField] private float mouseSensitivity = 0.15f;
+    [SerializeField] private float maxPitch = 89f;
+
+    private float yaw;
+    private float pitch;
+
+    private bool mouseCaptured;
+
+    private void Start() {
+        Vector3 angles = transform.eulerAngles;
+        yaw = angles.y;
+        pitch = angles.x;
+        if (pitch > 180f)
+            pitch -= 360f;
+
+        CaptureMouse();
+    }
+
+    private void Update()
+    {
+        HandleMouse();
+        HandleMovement();
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame) {
+            ReleaseMouse();
+        }
+        if (Mouse.current.leftButton.wasPressedThisFrame) {
+            CaptureMouse();
+        }
+    }
+
+    private void HandleMouse() {
+        if (!mouseCaptured)
+            return;
+
+        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+        yaw += mouseDelta.x * mouseSensitivity;
+        pitch -= mouseDelta.y * mouseSensitivity;
+        pitch = Mathf.Clamp(pitch, -maxPitch, maxPitch);
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+    }
+
+    private void HandleMovement() {
+        Keyboard keyboard = Keyboard.current;
+        Vector3 direction = Vector3.zero;
+
+        if (keyboard.wKey.isPressed)
+            direction += transform.forward;
+        if (keyboard.sKey.isPressed)
+            direction -= transform.forward;
+        if (keyboard.dKey.isPressed)
+            direction += transform.right;
+        if (keyboard.aKey.isPressed)
+            direction -= transform.right;
+        if (keyboard.spaceKey.isPressed)
+            direction += Vector3.up;
+        if (keyboard.leftShiftKey.isPressed)
+            direction -= Vector3.up;
+        if (direction.sqrMagnitude > 1f)
+            direction.Normalize();
+
+        float speed = keyboard.rightShiftKey.isPressed ? fastSpeed : moveSpeed;
+        transform.position += direction * speed * Time.deltaTime;
+    }
+
+    private void CaptureMouse() {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        mouseCaptured = true;
+    }
+
+    private void ReleaseMouse() {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        mouseCaptured = false;
+    }
+}
