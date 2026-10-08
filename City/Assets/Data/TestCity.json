@@ -1,542 +1,3942 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "city": {
+        "id": "verdant_arc",
         "name": "Verdant Arc",
-        "seed": 184729,
-        "dimensions": [6000, 6000],
-        "population_target": 150000
+        "location": {
+            "country": "EcoTerritory",
+            "region": "Northern Valley",
+            "latitude": 45.5,
+            "longitude": 9.2
+        },
+        "population": {
+            "target": 150000,
+            "current": 10000,
+            "growth_rate": 0.025
+        },
+        "dimensions": {
+            "width": 6000.0,
+            "depth": 6000.0
+        },
+        "coordinate_system": {
+            "units": "meters",
+            "origin": [
+                0.0,
+                0.0
+            ],
+            "x_axis": "east",
+            "z_axis": "north"
+        },
+        "planning": {
+            "development_model": "planned",
+            "density_model": "center_weighted",
+            "primary_orientation": 0.0,
+            "urban_growth_direction": "north",
+            "centrality": [
+                3000.0,
+                3000.0
+            ]
+        }
     },
-
     "terrain": {
         "type": "rolling",
-        "height_scale": 22
+        "elevation": {
+            "minimum": 0.0,
+            "maximum": 50.0,
+            "sea_level": 0.0,
+            "distribution": "uniform"
+        },
+        "slope": {
+            "minimum": 0.0,
+            "maximum": 25.0,
+            "preferred_building": 5.0,
+            "maximum_building": 15.0,
+            "maximum_road": 10.0
+        },
+        "roughness": {
+            "level": 0.3,
+            "scale": 500.0,
+            "octaves": 4,
+            "persistence": 0.5,
+            "lacunarity": 2.0
+        },
+        "hydrology": {
+            "drainage_pattern": "dendritic",
+            "water_flow_direction": 180.0,
+            "flood_risk": "low",
+            "flood_plain": false,
+            "retention_required": true,
+            "natural_drainage": true
+        },
+        "soil": {
+            "type": "loam",
+            "stability": "good",
+            "drainage": "good",
+            "bearing_capacity": 150.0
+        },
+        "buildability": {
+            "minimum_buildable_ratio": 0.65,
+            "preferred_slope": 5.0,
+            "maximum_slope": 15.0,
+            "exclude_floodplains": true,
+            "exclude_water_bodies": true,
+            "exclude_unstable_soil": true,
+            "terracing_allowed": false
+        },
+        "generation": {
+            "method": "noise",
+            "resolution": 257,
+            "height_scale": 22.0,
+            "seed": 184729,
+            "noise": {
+                "scale": 500.0,
+                "octaves": 4,
+                "persistence": 0.5,
+                "lacunarity": 2.0
+            }
+        }
     },
-
+    "climate": {
+        "classification": "temperate",
+        "temperature": {
+            "annual_average": 15.0,
+            "minimum": -5.0,
+            "maximum": 35.0,
+            "summer_average": 24.0,
+            "winter_average": 6.0,
+            "heatwave_threshold": 32.0,
+            "coldwave_threshold": -8.0
+        },
+        "precipitation": {
+            "annual_mm": 750.0,
+            "pattern": "seasonal",
+            "wet_season": [
+                10,
+                11,
+                12,
+                1,
+                2
+            ],
+            "dry_season": [
+                6,
+                7,
+                8
+            ],
+            "peak_monthly_mm": 95.0,
+            "rainfall_intensity": "moderate"
+        },
+        "humidity": {
+            "annual_average": 62.0,
+            "summer_average": 55.0,
+            "winter_average": 70.0
+        },
+        "solar": {
+            "average_irradiance": 4.8,
+            "peak_sun_hours": 5.2,
+            "annual_solar_energy": 1750.0,
+            "preferred_panel_orientation": 180.0,
+            "seasonal_variation": 0.35
+        },
+        "wind": {
+            "average_speed": 4.2,
+            "maximum_speed": 22.0,
+            "dominant_direction": 260.0,
+            "seasonal_directions": [
+                {
+                    "season": "winter",
+                    "direction": 270.0,
+                    "speed": 5.1
+                },
+                {
+                    "season": "summer",
+                    "direction": 240.0,
+                    "speed": 3.5
+                }
+            ],
+            "energy_potential": "moderate"
+        },
+        "extreme_weather": {
+            "heatwaves": "low",
+            "flooding": "low",
+            "storms": "moderate",
+            "drought": "low",
+            "cyclones": "none"
+        },
+        "seasons": [
+            {
+                "name": "spring",
+                "months": [
+                    3,
+                    4,
+                    5
+                ],
+                "average_temperature": 14.0,
+                "precipitation_mm": 180.0,
+                "solar_factor": 1.0,
+                "wind_factor": 1.0
+            },
+            {
+                "name": "summer",
+                "months": [
+                    6,
+                    7,
+                    8
+                ],
+                "average_temperature": 24.0,
+                "precipitation_mm": 110.0,
+                "solar_factor": 1.3,
+                "wind_factor": 0.9
+            },
+            {
+                "name": "autumn",
+                "months": [
+                    9,
+                    10,
+                    11
+                ],
+                "average_temperature": 15.0,
+                "precipitation_mm": 220.0,
+                "solar_factor": 0.9,
+                "wind_factor": 1.1
+            },
+            {
+                "name": "winter",
+                "months": [
+                    12,
+                    1,
+                    2
+                ],
+                "average_temperature": 6.0,
+                "precipitation_mm": 240.0,
+                "solar_factor": 0.6,
+                "wind_factor": 1.2
+            }
+        ]
+    },
+    "land_use": {
+        "categories": [
+            "residential",
+            "commercial",
+            "mixed_use",
+            "industrial",
+            "civic",
+            "park",
+            "energy",
+            "transport"
+        ],
+        "targets": {
+            "residential": 0.45,
+            "commercial": 0.15,
+            "mixed_use": 0.1,
+            "industrial": 0.08,
+            "civic": 0.05,
+            "park": 0.12,
+            "energy": 0.03,
+            "transport": 0.02
+        },
+        "constraints": {
+            "industrial_buffer": 200.0,
+            "minimum_green_ratio": 0.25,
+            "maximum_built_ratio": 0.65
+        },
+        "mixing": {
+            "allowed": true,
+            "allowed_combinations": [
+                {
+                    "primary": "residential",
+                    "secondary": "commercial"
+                },
+                {
+                    "primary": "commercial",
+                    "secondary": "office"
+                }
+            ]
+        },
+        "proximity": {
+            "residential_to_parks": {
+                "minimum": 50.0,
+                "preferred": 300.0,
+                "maximum": 500.0
+            },
+            "residential_to_services": {
+                "minimum": 50.0,
+                "preferred": 400.0,
+                "maximum": 800.0
+            },
+            "residential_to_work": {
+                "minimum": 100.0,
+                "preferred": 1500.0,
+                "maximum": 5000.0
+            }
+        }
+    },
     "sectors": [
         {
             "id": "central_mixed_core",
-            "type": "mixed",
-            "bounds": [2350, 2350, 1300, 1200],
-            "density": 0.88,
-            "building_height": [8, 24],
-            "population_target": 26000
+            "name": "Central Mixed Core",
+            "type": "mixed_use",
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    2350,
+                    2350,
+                    1300,
+                    1200
+                ]
+            },
+            "population": {
+                "target": 26000,
+                "current": 0,
+                "daytime_population": 31200,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 5280.0,
+                "floor_area": 2.2,
+                "building_coverage": 0.628,
+                "development_intensity": "high"
+            },
+            "land_use": {
+                "primary": "mixed_use",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "commercial_retail",
+                    "office_midrise",
+                    "mixed_use_block",
+                    "residential_tower"
+                ],
+                "height": {
+                    "minimum_floors": 8,
+                    "maximum_floors": 24,
+                    "preferred_floors": 16
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.628,
+                    "preferred": 0.44
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "high"
+            }
         },
-
         {
             "id": "north_residential",
+            "name": "North Residential",
             "type": "residential",
-            "bounds": [1800, 3700, 1700, 1300],
-            "density": 0.72,
-            "building_height": [5, 14],
-            "population_target": 22000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    1800,
+                    3700,
+                    1700,
+                    1300
+                ]
+            },
+            "population": {
+                "target": 22000,
+                "current": 0,
+                "daytime_population": 26400,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 4320.0,
+                "floor_area": 1.7999999999999998,
+                "building_coverage": 0.532,
+                "development_intensity": "high"
+            },
+            "land_use": {
+                "primary": "residential",
+                "secondary": [
+                    "commercial"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "single_family_house",
+                    "residential_apartment",
+                    "residential_tower"
+                ],
+                "height": {
+                    "minimum_floors": 5,
+                    "maximum_floors": 14,
+                    "preferred_floors": 9
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.532,
+                    "preferred": 0.36
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "high"
+            }
         },
-
         {
             "id": "northeast_residential",
+            "name": "Northeast Residential",
             "type": "residential",
-            "bounds": [3650, 3650, 1350, 1200],
-            "density": 0.68,
-            "building_height": [4, 12],
-            "population_target": 18000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    3650,
+                    3650,
+                    1350,
+                    1200
+                ]
+            },
+            "population": {
+                "target": 18000,
+                "current": 0,
+                "daytime_population": 21600,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 4080.0000000000005,
+                "floor_area": 1.7000000000000002,
+                "building_coverage": 0.508,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "residential",
+                "secondary": [
+                    "commercial"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "single_family_house",
+                    "residential_apartment"
+                ],
+                "height": {
+                    "minimum_floors": 4,
+                    "maximum_floors": 12,
+                    "preferred_floors": 8
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.508,
+                    "preferred": 0.34
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "west_residential",
+            "name": "West Residential",
             "type": "residential",
-            "bounds": [450, 2500, 1650, 1400],
-            "density": 0.65,
-            "building_height": [3, 10],
-            "population_target": 17000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    450,
+                    2500,
+                    1650,
+                    1400
+                ]
+            },
+            "population": {
+                "target": 17000,
+                "current": 0,
+                "daytime_population": 20400,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 3900.0,
+                "floor_area": 1.625,
+                "building_coverage": 0.49,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "residential",
+                "secondary": [
+                    "commercial"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "single_family_house",
+                    "residential_apartment"
+                ],
+                "height": {
+                    "minimum_floors": 3,
+                    "maximum_floors": 10,
+                    "preferred_floors": 6
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.49,
+                    "preferred": 0.325
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "south_residential",
+            "name": "South Residential",
             "type": "residential",
-            "bounds": [1850, 650, 1600, 1250],
-            "density": 0.7,
-            "building_height": [4, 12],
-            "population_target": 19000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    1850,
+                    650,
+                    1600,
+                    1250
+                ]
+            },
+            "population": {
+                "target": 19000,
+                "current": 0,
+                "daytime_population": 22800,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 4200.0,
+                "floor_area": 1.75,
+                "building_coverage": 0.52,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "residential",
+                "secondary": [
+                    "commercial"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "single_family_house",
+                    "residential_apartment"
+                ],
+                "height": {
+                    "minimum_floors": 4,
+                    "maximum_floors": 12,
+                    "preferred_floors": 8
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.52,
+                    "preferred": 0.35
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "southeast_residential",
+            "name": "Southeast Residential",
             "type": "residential",
-            "bounds": [3650, 900, 1350, 1250],
-            "density": 0.62,
-            "building_height": [4, 11],
-            "population_target": 16000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    3650,
+                    900,
+                    1350,
+                    1250
+                ]
+            },
+            "population": {
+                "target": 16000,
+                "current": 0,
+                "daytime_population": 19200,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 3720.0,
+                "floor_area": 1.55,
+                "building_coverage": 0.472,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "residential",
+                "secondary": [
+                    "commercial"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "single_family_house",
+                    "residential_apartment"
+                ],
+                "height": {
+                    "minimum_floors": 4,
+                    "maximum_floors": 11,
+                    "preferred_floors": 7
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.472,
+                    "preferred": 0.31
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "commercial_district",
+            "name": "Commercial District",
             "type": "commercial",
-            "bounds": [3700, 2350, 950, 950],
-            "density": 0.82,
-            "building_height": [8, 22],
-            "population_target": 6000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    3700,
+                    2350,
+                    950,
+                    950
+                ]
+            },
+            "population": {
+                "target": 6000,
+                "current": 0,
+                "daytime_population": 7200,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 4920.0,
+                "floor_area": 2.05,
+                "building_coverage": 0.592,
+                "development_intensity": "high"
+            },
+            "land_use": {
+                "primary": "commercial",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "commercial_retail",
+                    "office_midrise",
+                    "mixed_use_block",
+                    "residential_tower"
+                ],
+                "height": {
+                    "minimum_floors": 8,
+                    "maximum_floors": 22,
+                    "preferred_floors": 15
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.592,
+                    "preferred": 0.41
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "high"
+            }
         },
-
         {
             "id": "innovation_district",
+            "name": "Innovation District",
             "type": "commercial",
-            "bounds": [1300, 3850, 900, 850],
-            "density": 0.74,
-            "building_height": [6, 16],
-            "population_target": 5000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    1300,
+                    3850,
+                    900,
+                    850
+                ]
+            },
+            "population": {
+                "target": 5000,
+                "current": 0,
+                "daytime_population": 6000,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 4440.0,
+                "floor_area": 1.85,
+                "building_coverage": 0.544,
+                "development_intensity": "high"
+            },
+            "land_use": {
+                "primary": "commercial",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "commercial_retail",
+                    "office_midrise",
+                    "mixed_use_block"
+                ],
+                "height": {
+                    "minimum_floors": 6,
+                    "maximum_floors": 16,
+                    "preferred_floors": 11
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.544,
+                    "preferred": 0.37
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "high"
+            }
         },
-
         {
             "id": "industrial_east",
+            "name": "Industrial East",
             "type": "industrial",
-            "bounds": [5050, 2200, 800, 1500],
-            "density": 0.48,
-            "building_height": [3, 9],
-            "population_target": 2500
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    5050,
+                    2200,
+                    800,
+                    1500
+                ]
+            },
+            "population": {
+                "target": 2500,
+                "current": 0,
+                "daytime_population": 3000,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 2880.0,
+                "floor_area": 1.2,
+                "building_coverage": 0.388,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "industrial",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "industrial_facility",
+                    "logistics_warehouse"
+                ],
+                "height": {
+                    "minimum_floors": 3,
+                    "maximum_floors": 9,
+                    "preferred_floors": 6
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.388,
+                    "preferred": 0.24
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "civic_campus",
+            "name": "Civic Campus",
             "type": "civic",
-            "bounds": [1650, 2150, 650, 650],
-            "density": 0.45,
-            "building_height": [3, 10],
-            "population_target": 4500
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    1650,
+                    2150,
+                    650,
+                    650
+                ]
+            },
+            "population": {
+                "target": 4500,
+                "current": 0,
+                "daytime_population": 5400,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 2700.0,
+                "floor_area": 1.125,
+                "building_coverage": 0.37,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "civic",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "civic_government",
+                    "community_hub",
+                    "school_campus",
+                    "hospital_complex"
+                ],
+                "height": {
+                    "minimum_floors": 3,
+                    "maximum_floors": 10,
+                    "preferred_floors": 6
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.37,
+                    "preferred": 0.225
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "main_city_park",
-            "type": "green",
-            "bounds": [650, 4200, 950, 1250],
-            "density": 0.02,
-            "building_height": [1, 2],
-            "population_target": 0
+            "name": "Main City Park",
+            "type": "park",
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    650,
+                    4200,
+                    950,
+                    1250
+                ]
+            },
+            "population": {
+                "target": 0,
+                "current": 0,
+                "daytime_population": 500,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 120.0,
+                "floor_area": 0.05,
+                "building_coverage": 0.112,
+                "development_intensity": "low"
+            },
+            "land_use": {
+                "primary": "park",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "community_hub"
+                ],
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "preferred_floors": 1
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.112,
+                    "preferred": 0.01
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.85,
+                "tree_canopy_target": 0.7,
+                "tree_density": 120.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": true,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "central_green_corridor",
-            "type": "green",
-            "bounds": [2850, 950, 550, 1250],
-            "density": 0.03,
-            "building_height": [1, 2],
-            "population_target": 0
+            "name": "Central Green Corridor",
+            "type": "park",
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    2850,
+                    950,
+                    550,
+                    1250
+                ]
+            },
+            "population": {
+                "target": 0,
+                "current": 0,
+                "daytime_population": 500,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 180.0,
+                "floor_area": 0.075,
+                "building_coverage": 0.11800000000000001,
+                "development_intensity": "low"
+            },
+            "land_use": {
+                "primary": "park",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "community_hub"
+                ],
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "preferred_floors": 1
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.11800000000000001,
+                    "preferred": 0.015
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.85,
+                "tree_canopy_target": 0.7,
+                "tree_density": 120.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": true,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "east_greenbelt",
-            "type": "green",
-            "bounds": [4650, 3900, 950, 1500],
-            "density": 0.015,
-            "building_height": [1, 2],
-            "population_target": 0
+            "name": "East Greenbelt",
+            "type": "park",
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    4650,
+                    3900,
+                    950,
+                    1500
+                ]
+            },
+            "population": {
+                "target": 0,
+                "current": 0,
+                "daytime_population": 500,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 90.0,
+                "floor_area": 0.0375,
+                "building_coverage": 0.109,
+                "development_intensity": "low"
+            },
+            "land_use": {
+                "primary": "park",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "community_hub"
+                ],
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "preferred_floors": 1
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.109,
+                    "preferred": 0.0075
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.85,
+                "tree_canopy_target": 0.7,
+                "tree_density": 120.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": true,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "riverfront_park",
-            "type": "green",
-            "bounds": [500, 950, 1100, 650],
-            "density": 0.01,
-            "building_height": [1, 2],
-            "population_target": 0
+            "name": "Riverfront Park",
+            "type": "park",
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    500,
+                    950,
+                    1100,
+                    650
+                ]
+            },
+            "population": {
+                "target": 0,
+                "current": 0,
+                "daytime_population": 500,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 60.0,
+                "floor_area": 0.025,
+                "building_coverage": 0.10600000000000001,
+                "development_intensity": "low"
+            },
+            "land_use": {
+                "primary": "park",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "community_hub"
+                ],
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "preferred_floors": 1
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.10600000000000001,
+                    "preferred": 0.005
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.85,
+                "tree_canopy_target": 0.7,
+                "tree_density": 120.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": true,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "solar_energy_park",
+            "name": "Solar Energy Park",
             "type": "energy",
-            "bounds": [4950, 4850, 850, 850],
-            "density": 0.12,
-            "building_height": [2, 5],
-            "population_target": 0
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    4950,
+                    4850,
+                    850,
+                    850
+                ]
+            },
+            "population": {
+                "target": 0,
+                "current": 0,
+                "daytime_population": 500,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 720.0,
+                "floor_area": 0.3,
+                "building_coverage": 0.172,
+                "development_intensity": "low"
+            },
+            "land_use": {
+                "primary": "energy",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "utility_substation"
+                ],
+                "height": {
+                    "minimum_floors": 2,
+                    "maximum_floors": 5,
+                    "preferred_floors": 3
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.172,
+                    "preferred": 0.06
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         },
-
         {
             "id": "transit_hub",
+            "name": "Transit Hub",
             "type": "transport",
-            "bounds": [2650, 1550, 700, 500],
-            "density": 0.38,
-            "building_height": [2, 7],
-            "population_target": 1000
+            "geometry": {
+                "type": "rectangle",
+                "bounds": [
+                    2650,
+                    1550,
+                    700,
+                    500
+                ]
+            },
+            "population": {
+                "target": 1000,
+                "current": 0,
+                "daytime_population": 1200,
+                "growth_rate": 0.02
+            },
+            "density": {
+                "population": 2280.0,
+                "floor_area": 0.95,
+                "building_coverage": 0.32799999999999996,
+                "development_intensity": "medium"
+            },
+            "land_use": {
+                "primary": "transport",
+                "secondary": [
+                    "residential"
+                ],
+                "primary_ratio": 0.8,
+                "secondary_ratio": 0.2
+            },
+            "building_rules": {
+                "allowed_archetypes": [
+                    "parking_structure",
+                    "utility_substation"
+                ],
+                "height": {
+                    "minimum_floors": 2,
+                    "maximum_floors": 7,
+                    "preferred_floors": 4
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 8.0,
+                    "maximum_depth": 35.0
+                },
+                "spacing": {
+                    "building_gap": 4.0,
+                    "front_setback": 3.0,
+                    "side_setback": 2.0,
+                    "rear_setback": 3.0
+                },
+                "coverage": {
+                    "maximum": 0.32799999999999996,
+                    "preferred": 0.19
+                },
+                "orientation": {
+                    "mode": "road_aligned",
+                    "angle": 0.0,
+                    "variation": 15.0
+                }
+            },
+            "street_rules": {
+                "pattern": "grid",
+                "orientation": 0.0,
+                "blocks": {
+                    "minimum_width": 60.0,
+                    "maximum_width": 120.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "local_roads": {
+                    "spacing": 100.0,
+                    "width": 8.0,
+                    "lanes": 2
+                },
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                }
+            },
+            "green_rules": {
+                "minimum_ratio": 0.25,
+                "tree_canopy_target": 0.2,
+                "tree_density": 40.0,
+                "courtyards": true,
+                "green_roofs": true,
+                "green_walls": false,
+                "permeable_surface_target": 0.3
+            },
+            "services": [
+                {
+                    "type": "community_center",
+                    "required_count": 1,
+                    "service_radius": 500.0
+                }
+            ],
+            "energy": {
+                "rooftop_solar": true,
+                "solar_coverage_target": 0.35,
+                "district_energy": true,
+                "battery_storage": false
+            },
+            "constraints": {
+                "maximum_slope": 15.0,
+                "avoid_floodplain": true,
+                "avoid_water": true,
+                "protected": false,
+                "development_priority": "normal"
+            }
         }
     ],
-
     "road_graph": {
         "nodes": [
             {
                 "id": "central",
-                "position": [3000, 3000]
+                "position": [
+                    3000,
+                    3000
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "north_core",
-                "position": [3000, 4300]
+                "position": [
+                    3000,
+                    4300
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "south_core",
-                "position": [3000, 1650]
+                "position": [
+                    3000,
+                    1650
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "west_core",
-                "position": [1550, 3000]
+                "position": [
+                    1550,
+                    3000
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "east_core",
-                "position": [4550, 3000]
+                "position": [
+                    4550,
+                    3000
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
-
             {
                 "id": "northwest",
-                "position": [1450, 4300]
+                "position": [
+                    1450,
+                    4300
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "northeast",
-                "position": [4350, 4250]
+                "position": [
+                    4350,
+                    4250
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "southwest",
-                "position": [1450, 1450]
+                "position": [
+                    1450,
+                    1450
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "southeast",
-                "position": [4350, 1500]
+                "position": [
+                    4350,
+                    1500
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
-
             {
                 "id": "industrial",
-                "position": [5350, 2950]
+                "position": [
+                    5350,
+                    2950
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "energy",
-                "position": [5350, 5300]
+                "position": [
+                    5350,
+                    5300
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "park_north",
-                "position": [1100, 4800]
+                "position": [
+                    1100,
+                    4800
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "park_south",
-                "position": [1050, 1250]
+                "position": [
+                    1050,
+                    1250
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
-
             {
                 "id": "transit",
-                "position": [3000, 1800]
+                "position": [
+                    3000,
+                    1800
+                ],
+                "type": "transit_hub",
+                "capacity": 4
             },
             {
                 "id": "civic",
-                "position": [1950, 2400]
+                "position": [
+                    1950,
+                    2400
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "commercial",
-                "position": [4200, 2700]
+                "position": [
+                    4200,
+                    2700
+                ],
+                "type": "intersection",
+                "capacity": 4
             },
             {
                 "id": "innovation",
-                "position": [1750, 4250]
+                "position": [
+                    1750,
+                    4250
+                ],
+                "type": "intersection",
+                "capacity": 4
             }
         ],
-
         "edges": [
             {
                 "id": "arterial_north",
                 "from": "central",
                 "to": "north_core",
                 "type": "arterial",
-                "width": 18
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 18.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_south",
                 "from": "central",
                 "to": "south_core",
                 "type": "arterial",
-                "width": 18
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 18.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_west",
                 "from": "central",
                 "to": "west_core",
                 "type": "arterial",
-                "width": 18
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 18.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_east",
                 "from": "central",
                 "to": "east_core",
                 "type": "arterial",
-                "width": 18
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 18.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
-
             {
                 "id": "arterial_northwest",
                 "from": "north_core",
                 "to": "northwest",
                 "type": "arterial",
-                "width": 15
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 15.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_northeast",
                 "from": "north_core",
                 "to": "northeast",
                 "type": "arterial",
-                "width": 15
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 15.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_southwest",
                 "from": "south_core",
                 "to": "southwest",
                 "type": "arterial",
-                "width": 15
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 15.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
             {
                 "id": "arterial_southeast",
                 "from": "south_core",
                 "to": "southeast",
                 "type": "arterial",
-                "width": 15
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 15.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
-
             {
                 "id": "arterial_industrial",
                 "from": "east_core",
                 "to": "industrial",
                 "type": "arterial",
-                "width": 16
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 16.0,
+                "lanes": 4,
+                "speed_limit": 60.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": true
             },
-
             {
                 "id": "collector_north_loop",
                 "from": "northwest",
                 "to": "northeast",
                 "type": "collector",
-                "width": 11
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 11.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_south_loop",
                 "from": "southwest",
                 "to": "southeast",
                 "type": "collector",
-                "width": 11
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 11.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_west_loop",
                 "from": "northwest",
                 "to": "southwest",
                 "type": "collector",
-                "width": 11
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 11.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_east_loop",
                 "from": "northeast",
                 "to": "southeast",
                 "type": "collector",
-                "width": 11
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 11.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
-
             {
                 "id": "collector_commercial",
                 "from": "east_core",
                 "to": "commercial",
                 "type": "collector",
-                "width": 12
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 12.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_civic",
                 "from": "west_core",
                 "to": "civic",
                 "type": "collector",
-                "width": 10
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 10.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_transit",
                 "from": "south_core",
                 "to": "transit",
                 "type": "collector",
-                "width": 12
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 12.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "collector_innovation",
                 "from": "north_core",
                 "to": "innovation",
                 "type": "collector",
-                "width": 10
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 10.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
-
             {
                 "id": "collector_energy",
                 "from": "southeast",
                 "to": "energy",
                 "type": "collector",
-                "width": 11
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 11.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
-
             {
                 "id": "local_civic_central",
                 "from": "civic",
                 "to": "central",
                 "type": "local",
-                "width": 8
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 8.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "local_central_commercial",
                 "from": "central",
                 "to": "commercial",
                 "type": "local",
-                "width": 8
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 8.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "local_industrial_energy",
                 "from": "industrial",
                 "to": "energy",
                 "type": "local",
-                "width": 8
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 8.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "local_park_north",
                 "from": "northwest",
                 "to": "park_north",
                 "type": "local",
-                "width": 7
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 7.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "local_park_south",
                 "from": "southwest",
                 "to": "park_south",
                 "type": "local",
-                "width": 7
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 7.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
-
             {
                 "id": "cycle_north_south",
                 "from": "north_core",
                 "to": "south_core",
                 "type": "cycle",
-                "width": 3
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 3.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "cycle_west_east",
                 "from": "west_core",
                 "to": "east_core",
                 "type": "cycle",
-                "width": 3
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 3.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "cycle_northwest_northeast",
                 "from": "northwest",
                 "to": "northeast",
                 "type": "cycle",
-                "width": 3
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 3.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "cycle_southwest_southeast",
                 "from": "southwest",
                 "to": "southeast",
                 "type": "cycle",
-                "width": 3
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 3.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": true,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
-
             {
                 "id": "pedestrian_park_central",
                 "from": "park_north",
                 "to": "central",
                 "type": "pedestrian",
-                "width": 4
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 4.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "pedestrian_civic_transit",
                 "from": "civic",
                 "to": "transit",
                 "type": "pedestrian",
-                "width": 4
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 4.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             },
             {
                 "id": "pedestrian_commercial_central",
                 "from": "commercial",
                 "to": "central",
                 "type": "pedestrian",
-                "width": 4
+                "geometry": {
+                    "routing": "straight"
+                },
+                "width": 4.0,
+                "lanes": 2,
+                "speed_limit": 40.0,
+                "one_way": false,
+                "sidewalk": {
+                    "enabled": true,
+                    "width": 2.0
+                },
+                "cycling": {
+                    "enabled": false,
+                    "width": 1.5,
+                    "separated": true
+                },
+                "street_trees": {
+                    "enabled": true,
+                    "spacing": 15.0
+                },
+                "street_lighting": true,
+                "public_transport": false
             }
-        ]
-    },
-
-    "energy_zones": [
-        {
-            "id": "solar_energy_park",
-            "type": "solar",
-            "sector": "solar_energy_park",
-            "capacity": 65,
-            "unit": "MW"
+        ],
+        "hierarchy": {
+            "arterial": {
+                "default_width": 18.0,
+                "default_lanes": 4,
+                "default_speed": 60.0,
+                "sidewalk": true,
+                "cycling": true,
+                "street_lighting": true
+            },
+            "collector": {
+                "default_width": 12.0,
+                "default_lanes": 2,
+                "default_speed": 40.0,
+                "sidewalk": true,
+                "cycling": true,
+                "street_lighting": true
+            },
+            "local": {
+                "default_width": 8.0,
+                "default_lanes": 2,
+                "default_speed": 30.0,
+                "sidewalk": true,
+                "cycling": false,
+                "street_lighting": true
+            },
+            "pedestrian": {
+                "default_width": 4.0,
+                "default_lanes": 1,
+                "default_speed": 10.0,
+                "sidewalk": true,
+                "cycling": false,
+                "street_lighting": true
+            },
+            "cycle": {
+                "default_width": 3.0,
+                "default_lanes": 2,
+                "default_speed": 20.0,
+                "sidewalk": false,
+                "cycling": true,
+                "street_lighting": true
+            }
         },
-        {
-            "id": "solar_rooftop_core",
-            "type": "solar",
-            "sector": "central_mixed_core",
-            "capacity": 35,
-            "unit": "MW"
+        "connectivity": {
+            "minimum_node_degree": 1,
+            "maximum_dead_end_ratio": 0.1,
+            "maximum_intersection_spacing": 500.0,
+            "target_network_density": 15.0,
+            "require_sector_connections": true,
+            "require_transit_connections": true
         },
-        {
-            "id": "solar_industrial",
-            "type": "solar",
-            "sector": "industrial_east",
-            "capacity": 20,
-            "unit": "MW"
-        },
-        {
-            "id": "solar_residential_north",
-            "type": "solar",
-            "sector": "north_residential",
-            "capacity": 18,
-            "unit": "MW"
-        },
-        {
-            "id": "wind_east",
-            "type": "wind",
-            "sector": "east_greenbelt",
-            "capacity": 30,
-            "unit": "MW"
-        },
-        {
-            "id": "battery_central",
-            "type": "battery",
-            "sector": "solar_energy_park",
-            "capacity": 90,
-            "unit": "MWh"
-        },
-        {
-            "id": "battery_transit",
-            "type": "battery",
-            "sector": "transit_hub",
-            "capacity": 30,
-            "unit": "MWh"
-        },
-        {
-            "id": "main_substation",
-            "type": "substation",
-            "sector": "central_mixed_core",
-            "capacity": 180,
-            "unit": "MW"
-        },
-        {
-            "id": "industrial_substation",
-            "type": "substation",
-            "sector": "industrial_east",
-            "capacity": 70,
-            "unit": "MW"
+        "generation": {
+            "primary_pattern": "grid",
+            "orientation": 0.0,
+            "arterial_spacing": 800.0,
+            "collector_spacing": 300.0,
+            "follow_terrain": false,
+            "avoid_steep_slopes": true,
+            "maximum_slope": 10.0
         }
-    ],
-
-    "environment": {
-        "minimum_green_ratio": 0.32,
-
-        "water_bodies": [
-            {
-                "id": "southwest_lake",
-                "bounds": [350, 350, 1050, 500]
-            },
-            {
-                "id": "northeast_reservoir",
-                "bounds": [4700, 4500, 850, 550]
-            },
-            {
-                "id": "east_wetland",
-                "bounds": [5100, 3900, 600, 450]
+    },
+    "blocks": {
+        "generation": {
+            "method": "road_bounded",
+            "respect_sector_boundaries": true,
+            "respect_road_hierarchy": true,
+            "arterial_block_boundary": true,
+            "collector_block_boundary": true,
+            "allow_irregular_blocks": false
+        },
+        "size": {
+            "minimum_area": 2000.0,
+            "maximum_area": 25000.0,
+            "minimum_width": 40.0,
+            "maximum_width": 200.0,
+            "minimum_depth": 30.0,
+            "maximum_depth": 150.0,
+            "preferred_area": 8000.0,
+            "preferred_aspect_ratio": 1.5,
+            "maximum_aspect_ratio": 3.5
+        },
+        "shape": {
+            "preferred": "rectangular",
+            "regularity": 0.85,
+            "corner_treatment": "sharp",
+            "minimum_angle": 60.0,
+            "maximum_angle": 120.0
+        },
+        "subdivision": {
+            "enabled": true,
+            "method": "frontage_based",
+            "minimum_plot_area": 200.0,
+            "maximum_plot_area": 2500.0,
+            "minimum_frontage": 10.0,
+            "maximum_frontage": 60.0,
+            "minimum_depth": 15.0,
+            "maximum_depth": 60.0,
+            "internal_access": false,
+            "internal_road_width": 6.0
+        },
+        "development": {
+            "maximum_building_coverage": 0.65,
+            "preferred_building_coverage": 0.45,
+            "minimum_open_space": 0.2,
+            "minimum_green_space": 0.15,
+            "courtyard_ratio": 0.1,
+            "frontage_activation": "medium",
+            "parking": {
+                "allowed": true,
+                "maximum_surface_ratio": 0.15,
+                "underground_preferred": true
             }
-        ]
+        }
+    },
+    "buildings": {
+        "archetypes": [
+            {
+                "id": "single_family_house",
+                "type": "house",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "floor_height": 3.0
+                },
+                "footprint": {
+                    "minimum_width": 8.0,
+                    "maximum_width": 14.0,
+                    "minimum_depth": 10.0,
+                    "maximum_depth": 16.0
+                },
+                "density": "low",
+                "mixed_use": false
+            },
+            {
+                "id": "residential_apartment",
+                "type": "apartment",
+                "height": {
+                    "minimum_floors": 3,
+                    "maximum_floors": 8,
+                    "floor_height": 3.2
+                },
+                "footprint": {
+                    "minimum_width": 15.0,
+                    "maximum_width": 30.0,
+                    "minimum_depth": 12.0,
+                    "maximum_depth": 24.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "residential_tower",
+                "type": "tower",
+                "height": {
+                    "minimum_floors": 10,
+                    "maximum_floors": 24,
+                    "floor_height": 3.5
+                },
+                "footprint": {
+                    "minimum_width": 20.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 20.0,
+                    "maximum_depth": 35.0
+                },
+                "density": "high",
+                "mixed_use": true
+            },
+            {
+                "id": "office_midrise",
+                "type": "office",
+                "height": {
+                    "minimum_floors": 4,
+                    "maximum_floors": 12,
+                    "floor_height": 3.8
+                },
+                "footprint": {
+                    "minimum_width": 20.0,
+                    "maximum_width": 40.0,
+                    "minimum_depth": 20.0,
+                    "maximum_depth": 40.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "commercial_retail",
+                "type": "retail",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 3,
+                    "floor_height": 4.0
+                },
+                "footprint": {
+                    "minimum_width": 15.0,
+                    "maximum_width": 35.0,
+                    "minimum_depth": 15.0,
+                    "maximum_depth": 30.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "mixed_use_block",
+                "type": "mixed_use",
+                "height": {
+                    "minimum_floors": 5,
+                    "maximum_floors": 16,
+                    "floor_height": 3.5
+                },
+                "footprint": {
+                    "minimum_width": 20.0,
+                    "maximum_width": 40.0,
+                    "minimum_depth": 20.0,
+                    "maximum_depth": 35.0
+                },
+                "density": "high",
+                "mixed_use": true
+            },
+            {
+                "id": "industrial_facility",
+                "type": "industrial",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 4,
+                    "floor_height": 5.0
+                },
+                "footprint": {
+                    "minimum_width": 30.0,
+                    "maximum_width": 60.0,
+                    "minimum_depth": 30.0,
+                    "maximum_depth": 60.0
+                },
+                "density": "low",
+                "mixed_use": false
+            },
+            {
+                "id": "logistics_warehouse",
+                "type": "warehouse",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "floor_height": 8.0
+                },
+                "footprint": {
+                    "minimum_width": 40.0,
+                    "maximum_width": 80.0,
+                    "minimum_depth": 40.0,
+                    "maximum_depth": 80.0
+                },
+                "density": "low",
+                "mixed_use": false
+            },
+            {
+                "id": "school_campus",
+                "type": "school",
+                "height": {
+                    "minimum_floors": 2,
+                    "maximum_floors": 4,
+                    "floor_height": 3.8
+                },
+                "footprint": {
+                    "minimum_width": 25.0,
+                    "maximum_width": 50.0,
+                    "minimum_depth": 20.0,
+                    "maximum_depth": 40.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "hospital_complex",
+                "type": "hospital",
+                "height": {
+                    "minimum_floors": 4,
+                    "maximum_floors": 10,
+                    "floor_height": 4.0
+                },
+                "footprint": {
+                    "minimum_width": 30.0,
+                    "maximum_width": 60.0,
+                    "minimum_depth": 25.0,
+                    "maximum_depth": 50.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "civic_government",
+                "type": "government",
+                "height": {
+                    "minimum_floors": 3,
+                    "maximum_floors": 8,
+                    "floor_height": 4.2
+                },
+                "footprint": {
+                    "minimum_width": 25.0,
+                    "maximum_width": 45.0,
+                    "minimum_depth": 20.0,
+                    "maximum_depth": 40.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "community_hub",
+                "type": "community",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 3,
+                    "floor_height": 3.8
+                },
+                "footprint": {
+                    "minimum_width": 15.0,
+                    "maximum_width": 30.0,
+                    "minimum_depth": 15.0,
+                    "maximum_depth": 25.0
+                },
+                "density": "low",
+                "mixed_use": false
+            },
+            {
+                "id": "parking_structure",
+                "type": "parking",
+                "height": {
+                    "minimum_floors": 2,
+                    "maximum_floors": 6,
+                    "floor_height": 3.0
+                },
+                "footprint": {
+                    "minimum_width": 25.0,
+                    "maximum_width": 45.0,
+                    "minimum_depth": 25.0,
+                    "maximum_depth": 45.0
+                },
+                "density": "medium",
+                "mixed_use": false
+            },
+            {
+                "id": "utility_substation",
+                "type": "utility",
+                "height": {
+                    "minimum_floors": 1,
+                    "maximum_floors": 2,
+                    "floor_height": 4.5
+                },
+                "footprint": {
+                    "minimum_width": 15.0,
+                    "maximum_width": 30.0,
+                    "minimum_depth": 15.0,
+                    "maximum_depth": 30.0
+                },
+                "density": "low",
+                "mixed_use": false
+            }
+        ],
+        "generation": {
+            "distribution": "density_weighted",
+            "placement": "plot_based",
+            "seed": 184729,
+            "maximum_buildings_per_block": 16
+        },
+        "orientation": {
+            "mode": "road_aligned",
+            "preferred_angle": 0.0,
+            "variation": 15.0
+        },
+        "spacing": {
+            "minimum_building_gap": 4.0,
+            "maximum_building_gap": 20.0,
+            "minimum_front_setback": 3.0,
+            "minimum_side_setback": 2.0,
+            "minimum_rear_setback": 3.0
+        },
+        "sustainability": {
+            "rooftop_solar_allowed": true,
+            "rooftop_solar_required": false,
+            "solar_coverage_target": 0.4,
+            "green_roof_target": 0.2,
+            "green_wall_target": 0.05,
+            "rainwater_collection": true,
+            "passive_cooling": true,
+            "natural_ventilation": true,
+            "energy_efficiency": "high_efficiency"
+        }
+    },
+    "transport": {
+        "mode_share": {
+            "walking": 0.25,
+            "cycling": 0.2,
+            "public_transport": 0.35,
+            "private_vehicle": 0.15,
+            "other": 0.05
+        },
+        "public_transport": {
+            "enabled": true,
+            "modes": [
+                "bus",
+                "tram",
+                "brt"
+            ],
+            "coverage": {
+                "maximum_walk_distance": 400.0,
+                "minimum_population_coverage": 0.9
+            },
+            "stops": {
+                "minimum_spacing": 250.0,
+                "maximum_spacing": 600.0
+            },
+            "priority": "high"
+        },
+        "walking": {
+            "enabled": true,
+            "minimum_sidewalk_width": 2.0,
+            "maximum_distance_to_daily_services": 500.0,
+            "pedestrian_priority_zones": true,
+            "traffic_calming": true,
+            "shade_required": true,
+            "universal_access": true
+        },
+        "cycling": {
+            "enabled": true,
+            "minimum_lane_width": 2.0,
+            "separated_from_traffic": true,
+            "maximum_distance_to_cycle_network": 300.0,
+            "bike_parking": true
+        },
+        "roads": {
+            "private_vehicle_priority": "low",
+            "traffic_calming": true,
+            "low_emission_zones": true,
+            "freight_routes": true,
+            "emergency_route_access": true
+        },
+        "parking": {
+            "strategy": "reduced",
+            "maximum_surface_parking_ratio": 0.1,
+            "underground_parking_preferred": true,
+            "park_and_ride": true,
+            "ev_charging": true
+        },
+        "accessibility": {
+            "universal_design": true,
+            "maximum_gradient": 6.0,
+            "accessible_transit": true,
+            "accessible_crossings": true
+        }
+    },
+    "water": {
+        "supply": {
+            "sources": [
+                "surface_water",
+                "rainwater",
+                "recycled_water"
+            ],
+            "daily_capacity": 45000.0,
+            "reliability": "high",
+            "groundwater_recharge": true
+        },
+        "distribution": {
+            "potable_network": true,
+            "non_potable_network": true,
+            "district_metering": true,
+            "leakage_target": 0.05,
+            "storage_required": true
+        },
+        "consumption": {
+            "target_per_capita_daily": 120.0,
+            "maximum_per_capita_daily": 160.0,
+            "industrial_reuse_required": true,
+            "greywater_reuse": true
+        },
+        "stormwater": {
+            "strategy": "sustainable_drainage",
+            "retention_required": true,
+            "infiltration_required": true,
+            "permeable_surface_target": 0.35,
+            "rain_gardens": true,
+            "bioswales": true,
+            "retention_ponds": true,
+            "flood_protection_level": "high"
+        },
+        "wastewater": {
+            "treatment": "hybrid",
+            "reuse_target": 0.6,
+            "treated_water_uses": [
+                "irrigation",
+                "industrial",
+                "toilet_flushing"
+            ],
+            "sewage_treatment_required": true
+        },
+        "conservation": {
+            "rainwater_harvesting": true,
+            "water_efficient_landscaping": true,
+            "native_vegetation_preferred": true,
+            "irrigation_efficiency_target": 0.85,
+            "water_reuse_target": 0.6
+        }
+    },
+    "energy_zones": {
+        "generation": {
+            "sources": [
+                "solar",
+                "wind",
+                "grid"
+            ],
+            "renewable_target": 0.85,
+            "solar": {
+                "preferred": true,
+                "minimum_capacity_mw": 80.0,
+                "maximum_capacity_mw": 150.0,
+                "rooftop_generation": true,
+                "ground_mounted_generation": true
+            },
+            "wind": {
+                "preferred": true,
+                "minimum_capacity_mw": 20.0,
+                "maximum_capacity_mw": 50.0
+            }
+        },
+        "storage": {
+            "enabled": true,
+            "technologies": [
+                "battery",
+                "thermal"
+            ],
+            "minimum_capacity_mwh": 100.0,
+            "maximum_capacity_mwh": 250.0,
+            "distributed_storage": true
+        },
+        "distribution": {
+            "grid_connected": true,
+            "microgrids": true,
+            "smart_grid": true,
+            "district_energy": true,
+            "maximum_transmission_loss": 0.04,
+            "backup_generation": true
+        },
+        "zoning": {
+            "renewable_zones": [
+                {
+                    "type": "solar_farm",
+                    "priority": "high",
+                    "minimum_area": 50000.0
+                },
+                {
+                    "type": "wind_farm",
+                    "priority": "medium",
+                    "minimum_area": 30000.0
+                },
+                {
+                    "type": "rooftop_solar",
+                    "priority": "high",
+                    "minimum_area": 0.0
+                }
+            ],
+            "utility_zones": [
+                "substation",
+                "battery_storage",
+                "charging_hub",
+                "district_energy"
+            ],
+            "avoid_residential": true,
+            "avoid_water": true,
+            "avoid_protected_land": true
+        }
+    },
+    "vegetation": {
+        "green_space": {
+            "minimum_ratio": 0.3,
+            "target_ratio": 0.38,
+            "types": [
+                "park",
+                "urban_forest",
+                "green_corridor",
+                "community_garden",
+                "street_green"
+            ],
+            "connectivity_required": true,
+            "maximum_distance_to_green_space": 350.0
+        },
+        "trees": {
+            "canopy_target": 0.3,
+            "minimum_tree_density": 60.0,
+            "street_tree_spacing": 12.0,
+            "native_species_preferred": true,
+            "shade_priority": true,
+            "mature_canopy_required": false
+        },
+        "planting": {
+            "strategy": "native_ecology",
+            "native_species_only": false,
+            "drought_tolerant_preferred": true,
+            "water_efficient": true,
+            "green_roofs": true,
+            "green_walls": true,
+            "rain_gardens": true
+        },
+        "biodiversity": {
+            "priority": "high",
+            "wildlife_corridors": true,
+            "habitat_zones": true,
+            "protected_natural_areas": true,
+            "minimum_habitat_ratio": 0.1,
+            "native_species_target": 0.75
+        },
+        "generation": {
+            "distribution": "noise",
+            "density": 55.0,
+            "seed": 184729,
+            "terrain_adaptation": true,
+            "water_adaptation": true,
+            "avoid_buildings": true,
+            "avoid_roads": true
+        }
+    },
+    "environment": {
+        "air_quality": {
+            "target": "excellent",
+            "pollution_control": true,
+            "green_buffers": true,
+            "industrial_separation": true
+        },
+        "noise": {
+            "control_required": true,
+            "maximum_daytime_db": 55.0,
+            "maximum_nighttime_db": 42.0,
+            "quiet_zones": true,
+            "noise_buffers": true
+        },
+        "climate_resilience": {
+            "priority": "high",
+            "heat_resilience": true,
+            "flood_resilience": true,
+            "drought_resilience": true,
+            "storm_resilience": true,
+            "sea_level_rise_resilience": false,
+            "maximum_urban_heat_island_intensity": 2.0
+        },
+        "pollution": {
+            "air": true,
+            "water": true,
+            "soil": true,
+            "light": true,
+            "industrial_emission_controls": true,
+            "waste_management": true
+        },
+        "natural_resources": {
+            "protected_areas": true,
+            "resource_efficiency": "high_efficiency",
+            "soil_protection": true,
+            "groundwater_protection": true,
+            "wetland_protection": true,
+            "deforestation_avoidance": true
+        }
+    },
+    "sustainability": {
+        "energy": {
+            "renewable_share_target": 0.85,
+            "energy_efficiency_target": 0.4,
+            "grid_dependency_target": 0.15,
+            "energy_storage_target": 0.25,
+            "net_zero_target": true
+        },
+        "transport": {
+            "sustainable_mode_share": 0.8,
+            "maximum_average_commute_distance": 4500.0,
+            "maximum_average_commute_time": 25.0,
+            "vehicle_emission_target": 0.0
+        },
+        "water": {
+            "water_reuse_target": 0.6,
+            "water_loss_target": 0.05,
+            "rainwater_capture_target": 0.4,
+            "groundwater_recharge_target": 0.15
+        },
+        "land": {
+            "green_space_target": 0.35,
+            "built_land_target": 0.45,
+            "protected_land_target": 0.1,
+            "permeable_surface_target": 0.4
+        },
+        "environment": {
+            "carbon_emission_target": 800.0,
+            "air_quality_target": "excellent",
+            "urban_heat_reduction_target": 2.5,
+            "biodiversity_target": 0.35
+        },
+        "resource_efficiency": {
+            "waste_recycling_target": 0.8,
+            "waste_to_landfill_target": 0.05,
+            "material_reuse_target": 0.35,
+            "circular_economy_target": 0.6
+        }
+    },
+    "generation": {
+        "seed": 184729,
+        "deterministic": true,
+        "detail_level": "high",
+        "terrain_detail": "high",
+        "building_detail": "medium",
+        "vegetation_detail": "medium",
+        "road_detail": "high",
+        "randomness": 0.25,
+        "lod": {
+            "enabled": true,
+            "distances": [
+                100.0,
+                300.0,
+                800.0,
+                2000.0
+            ]
+        },
+        "coordinate_precision": 0.1
     }
 }

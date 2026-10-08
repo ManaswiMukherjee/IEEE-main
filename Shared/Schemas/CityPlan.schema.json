@@ -4,193 +4,1561 @@
     "title": "Sustainable City Plan",
     "description": "Structured representation of a procedurally generated sustainable city.",
     "type": "object",
-
-    "required": ["city", "terrain", "sectors", "road_graph", "energy_zones", "environment"],
-
+    "required": [
+        "city",
+        "terrain",
+        "climate",
+        "land_use",
+        "sectors",
+        "road_graph",
+        "blocks",
+        "buildings",
+        "transport",
+        "water",
+        "energy_zones",
+        "vegetation",
+        "environment",
+        "sustainability",
+        "generation"
+    ],
     "properties": {
         "city": {
             "type": "object",
-            "required": ["name", "seed", "dimensions", "population_target"],
+            "description": "Global identity, geographic context, population, dimensions, and planning configuration of the city.",
+            "required": [
+                "id",
+                "name",
+                "location",
+                "population",
+                "dimensions",
+                "coordinate_system",
+                "planning"
+            ],
             "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique machine-readable identifier for the city plan.",
+                    "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+                },
                 "name": {
                     "type": "string",
+                    "description": "Human-readable name of the city plan.",
                     "minLength": 1
                 },
-                "seed": {
-                    "type": "integer",
-                    "minimum": 0
+                "location": {
+                    "type": "object",
+                    "required": [
+                        "country",
+                        "latitude",
+                        "longitude"
+                    ],
+                    "properties": {
+                        "country": {
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "region": {
+                            "type": "string",
+                            "minLength": 1
+                        },
+                        "latitude": {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "population": {
+                    "type": "object",
+                    "required": [
+                        "target"
+                    ],
+                    "properties": {
+                        "target": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Target population the generated city is designed to accommodate."
+                        },
+                        "current": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Existing population when the plan represents expansion or redevelopment."
+                        },
+                        "growth_rate": {
+                            "type": "number",
+                            "minimum": -1,
+                            "description": "Expected annual population growth rate as a decimal."
+                        }
+                    },
+                    "additionalProperties": false
                 },
                 "dimensions": {
-                    "type": "array",
-                    "prefixItems": [
-                        {
-                            "type": "number",
-                            "exclusiveMinimum": 0
-                        },
-                        {
-                            "type": "number",
-                            "exclusiveMinimum": 0
-                        }
+                    "type": "object",
+                    "required": [
+                        "width",
+                        "depth"
                     ],
-                    "minItems": 2,
-                    "maxItems": 2
+                    "properties": {
+                        "width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "description": "Total city width in meters."
+                        },
+                        "depth": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "description": "Total city depth in meters."
+                        }
+                    },
+                    "additionalProperties": false
                 },
-                "population_target": {
-                    "type": "integer",
-                    "minimum": 1
+                "coordinate_system": {
+                    "type": "object",
+                    "required": [
+                        "units",
+                        "origin",
+                        "x_axis",
+                        "z_axis"
+                    ],
+                    "properties": {
+                        "units": {
+                            "type": "string",
+                            "const": "meters"
+                        },
+                        "origin": {
+                            "$ref": "#/$defs/position"
+                        },
+                        "x_axis": {
+                            "type": "string",
+                            "enum": [
+                                "east",
+                                "west"
+                            ]
+                        },
+                        "z_axis": {
+                            "type": "string",
+                            "enum": [
+                                "north",
+                                "south"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "planning": {
+                    "type": "object",
+                    "required": [
+                        "development_model",
+                        "density_model",
+                        "primary_orientation",
+                        "centrality"
+                    ],
+                    "properties": {
+                        "development_model": {
+                            "type": "string",
+                            "enum": [
+                                "planned",
+                                "organic",
+                                "hybrid"
+                            ]
+                        },
+                        "density_model": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "center_weighted",
+                                "transit_oriented",
+                                "distributed"
+                            ]
+                        },
+                        "primary_orientation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "exclusiveMaximum": 180,
+                            "description": "Primary orientation of the city's urban grid in degrees."
+                        },
+                        "urban_growth_direction": {
+                            "type": "string",
+                            "enum": [
+                                "north",
+                                "south",
+                                "east",
+                                "west",
+                                "northeast",
+                                "northwest",
+                                "southeast",
+                                "southwest",
+                                "radial",
+                                "none"
+                            ]
+                        },
+                        "centrality": {
+                            "$ref": "#/$defs/position"
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "additionalProperties": false
         },
-
         "terrain": {
             "type": "object",
-            "required": ["type", "height_scale"],
-
+            "description": "Physical terrain characteristics and generation constraints for the city.",
+            "required": [
+                "type",
+                "elevation",
+                "slope",
+                "roughness",
+                "hydrology",
+                "soil",
+                "buildability",
+                "generation"
+            ],
             "properties": {
                 "type": {
                     "type": "string",
-                    "enum": ["flat", "rolling", "hilly", "mountainous"]
+                    "description": "General morphological classification of the terrain.",
+                    "enum": [
+                        "flat",
+                        "rolling",
+                        "hilly",
+                        "mountainous",
+                        "coastal",
+                        "valley",
+                        "plateau",
+                        "basin",
+                        "mixed"
+                    ]
                 },
-
-                "height_scale": {
-                    "type": "number",
-                    "minimum": 0
+                "elevation": {
+                    "type": "object",
+                    "description": "Elevation characteristics of the terrain.",
+                    "required": [
+                        "minimum",
+                        "maximum"
+                    ],
+                    "properties": {
+                        "minimum": {
+                            "type": "number",
+                            "description": "Minimum terrain elevation in meters."
+                        },
+                        "maximum": {
+                            "type": "number",
+                            "description": "Maximum terrain elevation in meters."
+                        },
+                        "sea_level": {
+                            "type": "number",
+                            "default": 0,
+                            "description": "Reference sea level in meters."
+                        },
+                        "distribution": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "center_high",
+                                "center_low",
+                                "north_high",
+                                "south_high",
+                                "east_high",
+                                "west_high",
+                                "ridge",
+                                "valley",
+                                "custom"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "slope": {
+                    "type": "object",
+                    "description": "Terrain slope characteristics and construction constraints.",
+                    "required": [
+                        "minimum",
+                        "maximum",
+                        "preferred_building",
+                        "maximum_building",
+                        "maximum_road"
+                    ],
+                    "properties": {
+                        "minimum": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90,
+                            "description": "Minimum terrain slope in degrees."
+                        },
+                        "maximum": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90,
+                            "description": "Maximum terrain slope in degrees."
+                        },
+                        "preferred_building": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90,
+                            "description": "Preferred maximum slope for building placement."
+                        },
+                        "maximum_building": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90,
+                            "description": "Absolute maximum slope allowed for normal buildings."
+                        },
+                        "maximum_road": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90,
+                            "description": "Maximum permitted slope for roads."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "roughness": {
+                    "type": "object",
+                    "description": "Controls the spatial variation and smoothness of terrain.",
+                    "required": [
+                        "level"
+                    ],
+                    "properties": {
+                        "level": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "description": "Overall terrain roughness from smooth (0) to highly irregular (1)."
+                        },
+                        "scale": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "description": "Spatial scale of major terrain features."
+                        },
+                        "octaves": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 12
+                        },
+                        "persistence": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        "lacunarity": {
+                            "type": "number",
+                            "minimum": 1
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "hydrology": {
+                    "type": "object",
+                    "description": "Natural water-flow and drainage characteristics of the terrain.",
+                    "required": [
+                        "drainage_pattern"
+                    ],
+                    "properties": {
+                        "drainage_pattern": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "radial",
+                                "dendritic",
+                                "parallel",
+                                "trellis",
+                                "centripetal",
+                                "coastal",
+                                "custom"
+                            ]
+                        },
+                        "water_flow_direction": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360,
+                            "description": "Dominant water-flow direction in degrees."
+                        },
+                        "flood_risk": {
+                            "type": "string",
+                            "enum": [
+                                "very_low",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "flood_plain": {
+                            "type": "boolean"
+                        },
+                        "retention_required": {
+                            "type": "boolean"
+                        },
+                        "natural_drainage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "soil": {
+                    "type": "object",
+                    "description": "Soil characteristics relevant to construction, vegetation, and water management.",
+                    "required": [
+                        "type"
+                    ],
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "sand",
+                                "clay",
+                                "silt",
+                                "loam",
+                                "sandy_loam",
+                                "clay_loam",
+                                "rock",
+                                "alluvial",
+                                "mixed"
+                            ]
+                        },
+                        "stability": {
+                            "type": "string",
+                            "enum": [
+                                "poor",
+                                "moderate",
+                                "good",
+                                "excellent"
+                            ]
+                        },
+                        "drainage": {
+                            "type": "string",
+                            "enum": [
+                                "poor",
+                                "moderate",
+                                "good",
+                                "excellent"
+                            ]
+                        },
+                        "bearing_capacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Approximate soil bearing capacity in kPa."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "buildability": {
+                    "type": "object",
+                    "description": "Rules defining which portions of the terrain are suitable for urban development.",
+                    "required": [
+                        "minimum_buildable_ratio"
+                    ],
+                    "properties": {
+                        "minimum_buildable_ratio": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        "preferred_slope": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90
+                        },
+                        "maximum_slope": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90
+                        },
+                        "exclude_floodplains": {
+                            "type": "boolean"
+                        },
+                        "exclude_water_bodies": {
+                            "type": "boolean"
+                        },
+                        "exclude_unstable_soil": {
+                            "type": "boolean"
+                        },
+                        "terracing_allowed": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "generation": {
+                    "type": "object",
+                    "description": "Procedural terrain generation parameters.",
+                    "required": [
+                        "method"
+                    ],
+                    "properties": {
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "flat",
+                                "noise",
+                                "heightmap",
+                                "erosion",
+                                "hybrid"
+                            ]
+                        },
+                        "resolution": {
+                            "type": "integer",
+                            "minimum": 2
+                        },
+                        "height_scale": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "seed": {
+                            "type": "integer"
+                        },
+                        "noise": {
+                            "type": "object",
+                            "properties": {
+                                "scale": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0
+                                },
+                                "octaves": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "persistence": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                },
+                                "lacunarity": {
+                                    "type": "number",
+                                    "minimum": 1
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
-
             "additionalProperties": false
         },
-
+        "climate": {
+            "type": "object",
+            "description": "Climatic conditions and environmental patterns used for urban planning, building design, vegetation, water management, and renewable-energy planning.",
+            "required": [
+                "classification",
+                "temperature",
+                "precipitation",
+                "humidity",
+                "solar",
+                "wind",
+                "extreme_weather",
+                "seasons"
+            ],
+            "properties": {
+                "classification": {
+                    "type": "string",
+                    "description": "General climate classification of the city.",
+                    "enum": [
+                        "tropical",
+                        "tropical_monsoon",
+                        "tropical_savanna",
+                        "arid",
+                        "semi_arid",
+                        "mediterranean",
+                        "temperate",
+                        "continental",
+                        "oceanic",
+                        "subtropical",
+                        "polar",
+                        "alpine",
+                        "mixed"
+                    ]
+                },
+                "temperature": {
+                    "type": "object",
+                    "description": "Temperature characteristics of the city.",
+                    "required": [
+                        "annual_average",
+                        "minimum",
+                        "maximum"
+                    ],
+                    "properties": {
+                        "annual_average": {
+                            "type": "number",
+                            "description": "Average annual temperature in degrees Celsius."
+                        },
+                        "minimum": {
+                            "type": "number",
+                            "description": "Typical minimum temperature in degrees Celsius."
+                        },
+                        "maximum": {
+                            "type": "number",
+                            "description": "Typical maximum temperature in degrees Celsius."
+                        },
+                        "summer_average": {
+                            "type": "number",
+                            "description": "Average summer temperature in degrees Celsius."
+                        },
+                        "winter_average": {
+                            "type": "number",
+                            "description": "Average winter temperature in degrees Celsius."
+                        },
+                        "heatwave_threshold": {
+                            "type": "number",
+                            "description": "Temperature above which heatwave mitigation becomes important."
+                        },
+                        "coldwave_threshold": {
+                            "type": "number",
+                            "description": "Temperature below which cold-weather planning becomes important."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "precipitation": {
+                    "type": "object",
+                    "description": "Rainfall and precipitation characteristics.",
+                    "required": [
+                        "annual_mm",
+                        "pattern"
+                    ],
+                    "properties": {
+                        "annual_mm": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Average annual precipitation in millimeters."
+                        },
+                        "pattern": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "seasonal",
+                                "monsoon",
+                                "winter_dominant",
+                                "summer_dominant",
+                                "irregular"
+                            ]
+                        },
+                        "wet_season": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 12
+                            },
+                            "minItems": 1,
+                            "maxItems": 12,
+                            "uniqueItems": true
+                        },
+                        "dry_season": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 12
+                            },
+                            "minItems": 1,
+                            "maxItems": 12,
+                            "uniqueItems": true
+                        },
+                        "peak_monthly_mm": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "rainfall_intensity": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "humidity": {
+                    "type": "object",
+                    "description": "Atmospheric humidity characteristics.",
+                    "required": [
+                        "annual_average"
+                    ],
+                    "properties": {
+                        "annual_average": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100,
+                            "description": "Average relative humidity as a percentage."
+                        },
+                        "summer_average": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                        },
+                        "winter_average": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "solar": {
+                    "type": "object",
+                    "description": "Solar-resource characteristics used for building orientation, passive design, and solar-energy planning.",
+                    "required": [
+                        "average_irradiance",
+                        "peak_sun_hours"
+                    ],
+                    "properties": {
+                        "average_irradiance": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Average solar irradiance in kWh/m\u00b2/day."
+                        },
+                        "peak_sun_hours": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Average daily equivalent peak-sun hours."
+                        },
+                        "annual_solar_energy": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Estimated annual solar resource in kWh/m\u00b2/year."
+                        },
+                        "preferred_panel_orientation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360,
+                            "description": "Preferred solar-panel azimuth in degrees."
+                        },
+                        "seasonal_variation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Relative seasonal variation in available solar energy."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "wind": {
+                    "type": "object",
+                    "description": "Wind-resource characteristics used for building orientation, ventilation, and wind-energy planning.",
+                    "required": [
+                        "average_speed",
+                        "dominant_direction"
+                    ],
+                    "properties": {
+                        "average_speed": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Average wind speed in meters per second."
+                        },
+                        "maximum_speed": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Typical maximum sustained wind speed in meters per second."
+                        },
+                        "dominant_direction": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360,
+                            "description": "Dominant wind direction in degrees."
+                        },
+                        "seasonal_directions": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "season",
+                                    "direction",
+                                    "speed"
+                                ],
+                                "properties": {
+                                    "season": {
+                                        "type": "string"
+                                    },
+                                    "direction": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 360
+                                    },
+                                    "speed": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "energy_potential": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "extreme_weather": {
+                    "type": "object",
+                    "description": "Major climate hazards that influence city planning and infrastructure.",
+                    "required": [
+                        "heatwaves",
+                        "flooding",
+                        "storms"
+                    ],
+                    "properties": {
+                        "heatwaves": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "flooding": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "storms": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "drought": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "cyclones": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "seasons": {
+                    "type": "array",
+                    "description": "Seasonal climate profile used for annual simulations and sustainability calculations.",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "months"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "months": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 12
+                                },
+                                "minItems": 1,
+                                "maxItems": 12,
+                                "uniqueItems": true
+                            },
+                            "average_temperature": {
+                                "type": "number"
+                            },
+                            "precipitation_mm": {
+                                "type": "number",
+                                "minimum": 0
+                            },
+                            "solar_factor": {
+                                "type": "number",
+                                "minimum": 0
+                            },
+                            "wind_factor": {
+                                "type": "number",
+                                "minimum": 0
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
         "sectors": {
             "type": "array",
+            "description": "Spatially defined districts within the city, each with its own land-use, density, building, street, green-space, service, and development rules.",
             "minItems": 1,
-
             "items": {
                 "type": "object",
-
-                "required": ["id", "type", "bounds"],
-
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "geometry",
+                    "population",
+                    "density",
+                    "building_rules",
+                    "street_rules",
+                    "green_rules",
+                    "constraints"
+                ],
                 "properties": {
                     "id": {
                         "type": "string",
-                        "pattern": "^[a-zA-Z0-9_-]+$"
+                        "description": "Unique machine-readable identifier for the sector.",
+                        "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
                     },
-
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable name of the sector.",
+                        "minLength": 1
+                    },
                     "type": {
                         "type": "string",
+                        "description": "Primary land-use classification of the sector.",
                         "enum": [
                             "residential",
+                            "mixed_use",
                             "commercial",
+                            "office",
                             "industrial",
+                            "logistics",
                             "civic",
-                            "mixed",
-                            "green",
+                            "education",
+                            "healthcare",
+                            "recreation",
+                            "park",
+                            "forest",
+                            "wetland",
+                            "agriculture",
+                            "water",
+                            "transport",
                             "energy",
-                            "transport"
+                            "utility",
+                            "protected"
                         ]
                     },
-
-                    "bounds": {
-                        "type": "array",
-                        "prefixItems": [
-                            { "type": "number" },
-                            { "type": "number" },
-                            { "type": "number" },
-                            { "type": "number" }
-                        ],
-                        "minItems": 4,
-                        "maxItems": 4
-                    },
-
-                    "density": {
-                        "type": "number",
-                        "minimum": 0,
-                        "maximum": 1
-                    },
-
-                    "building_height": {
-                        "type": "array",
-                        "prefixItems": [
-                            {
-                                "type": "number",
-                                "minimum": 1
-                            },
-                            {
-                                "type": "number",
-                                "minimum": 1
-                            }
-                        ],
-                        "minItems": 2,
-                        "maxItems": 2
-                    },
-
-                    "population_target": {
-                        "type": "integer",
-                        "minimum": 0
-                    }
-                },
-
-                "additionalProperties": false
-            }
-        },
-
-        "road_graph": {
-            "type": "object",
-
-            "required": ["nodes", "edges"],
-
-            "properties": {
-                "nodes": {
-                    "type": "array",
-
-                    "items": {
+                    "geometry": {
                         "type": "object",
-
-                        "required": ["id", "position"],
-
+                        "description": "Spatial definition of the sector.",
+                        "required": [
+                            "type",
+                            "bounds"
+                        ],
                         "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-
-                            "position": {
-                                "type": "array",
-                                "prefixItems": [{ "type": "number" }, { "type": "number" }],
-                                "minItems": 2,
-                                "maxItems": 2
-                            }
-                        },
-
-                        "additionalProperties": false
-                    }
-                },
-
-                "edges": {
-                    "type": "array",
-
-                    "items": {
-                        "type": "object",
-
-                        "required": ["id", "from", "to", "type"],
-
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-
-                            "from": {
-                                "type": "string"
-                            },
-
-                            "to": {
-                                "type": "string"
-                            },
-
                             "type": {
                                 "type": "string",
                                 "enum": [
-                                    "highway",
+                                    "rectangle",
+                                    "polygon",
+                                    "circle"
+                                ]
+                            },
+                            "bounds": {
+                                "type": "array",
+                                "description": "Axis-aligned bounding rectangle represented as [x, z, width, depth].",
+                                "prefixItems": [
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "number"
+                                    },
+                                    {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                ],
+                                "minItems": 4,
+                                "maxItems": 4
+                            },
+                            "polygon": {
+                                "type": "array",
+                                "description": "Polygon vertices represented as [x, z] coordinates.",
+                                "items": {
+                                    "$ref": "#/$defs/position"
+                                },
+                                "minItems": 3
+                            },
+                            "center": {
+                                "$ref": "#/$defs/position"
+                            },
+                            "radius": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "population": {
+                        "type": "object",
+                        "required": [
+                            "target"
+                        ],
+                        "properties": {
+                            "target": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Target population for the sector."
+                            },
+                            "current": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "daytime_population": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Expected daytime population including workers, visitors, and residents."
+                            },
+                            "growth_rate": {
+                                "type": "number",
+                                "minimum": -1
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "density": {
+                        "type": "object",
+                        "description": "Population and built-form density characteristics.",
+                        "required": [
+                            "population",
+                            "floor_area",
+                            "building_coverage"
+                        ],
+                        "properties": {
+                            "population": {
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "Target population density in people per square kilometer."
+                            },
+                            "floor_area": {
+                                "type": "number",
+                                "minimum": 0,
+                                "description": "Target floor-area ratio (FAR)."
+                            },
+                            "building_coverage": {
+                                "$ref": "#/$defs/ratio"
+                            },
+                            "development_intensity": {
+                                "type": "string",
+                                "enum": [
+                                    "very_low",
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "very_high"
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "land_use": {
+                        "type": "object",
+                        "description": "Detailed land-use composition within the sector.",
+                        "required": [
+                            "primary"
+                        ],
+                        "properties": {
+                            "primary": {
+                                "type": "string"
+                            },
+                            "secondary": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "uniqueItems": true
+                            },
+                            "primary_ratio": {
+                                "$ref": "#/$defs/ratio"
+                            },
+                            "secondary_ratio": {
+                                "$ref": "#/$defs/ratio"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "building_rules": {
+                        "type": "object",
+                        "description": "Rules controlling the type, size, height, spacing, and placement of buildings within the sector.",
+                        "required": [
+                            "allowed_archetypes",
+                            "height",
+                            "footprint",
+                            "spacing",
+                            "coverage"
+                        ],
+                        "properties": {
+                            "allowed_archetypes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 1,
+                                "uniqueItems": true
+                            },
+                            "height": {
+                                "type": "object",
+                                "required": [
+                                    "minimum_floors",
+                                    "maximum_floors"
+                                ],
+                                "properties": {
+                                    "minimum_floors": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "maximum_floors": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "preferred_floors": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "footprint": {
+                                "type": "object",
+                                "properties": {
+                                    "minimum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "minimum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "spacing": {
+                                "type": "object",
+                                "properties": {
+                                    "building_gap": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "front_setback": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "side_setback": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "rear_setback": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "coverage": {
+                                "type": "object",
+                                "required": [
+                                    "maximum"
+                                ],
+                                "properties": {
+                                    "maximum": {
+                                        "$ref": "#/$defs/ratio"
+                                    },
+                                    "preferred": {
+                                        "$ref": "#/$defs/ratio"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "orientation": {
+                                "type": "object",
+                                "properties": {
+                                    "mode": {
+                                        "type": "string",
+                                        "enum": [
+                                            "free",
+                                            "road_aligned",
+                                            "grid_aligned",
+                                            "solar_aligned",
+                                            "wind_aligned"
+                                        ]
+                                    },
+                                    "angle": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 360
+                                    },
+                                    "variation": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 180
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "street_rules": {
+                        "type": "object",
+                        "description": "Rules for generating the internal street and block structure of the sector.",
+                        "required": [
+                            "pattern",
+                            "blocks",
+                            "local_roads"
+                        ],
+                        "properties": {
+                            "pattern": {
+                                "type": "string",
+                                "enum": [
+                                    "grid",
+                                    "dense_grid",
+                                    "organic",
+                                    "radial",
+                                    "ring",
+                                    "campus",
+                                    "industrial_grid",
+                                    "cul_de_sac",
+                                    "pedestrian",
+                                    "none"
+                                ]
+                            },
+                            "orientation": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 360
+                            },
+                            "blocks": {
+                                "type": "object",
+                                "required": [
+                                    "minimum_width",
+                                    "maximum_width",
+                                    "minimum_depth",
+                                    "maximum_depth"
+                                ],
+                                "properties": {
+                                    "minimum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "minimum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "local_roads": {
+                                "type": "object",
+                                "required": [
+                                    "width"
+                                ],
+                                "properties": {
+                                    "spacing": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "lanes": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "sidewalk": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "cycling": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "street_trees": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "spacing": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "green_rules": {
+                        "type": "object",
+                        "description": "Green infrastructure and vegetation requirements for the sector.",
+                        "properties": {
+                            "minimum_ratio": {
+                                "$ref": "#/$defs/ratio"
+                            },
+                            "tree_canopy_target": {
+                                "$ref": "#/$defs/ratio"
+                            },
+                            "tree_density": {
+                                "type": "number",
+                                "minimum": 0
+                            },
+                            "courtyards": {
+                                "type": "boolean"
+                            },
+                            "green_roofs": {
+                                "type": "boolean"
+                            },
+                            "green_walls": {
+                                "type": "boolean"
+                            },
+                            "permeable_surface_target": {
+                                "$ref": "#/$defs/ratio"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "services": {
+                        "type": "array",
+                        "description": "Public and essential services that should be present within the sector.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "type"
+                            ],
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "school",
+                                        "hospital",
+                                        "clinic",
+                                        "fire_station",
+                                        "police_station",
+                                        "community_center",
+                                        "library",
+                                        "market",
+                                        "park",
+                                        "transit_station",
+                                        "recreation_center",
+                                        "government"
+                                    ]
+                                },
+                                "required_count": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                },
+                                "service_radius": {
+                                    "type": "number",
+                                    "minimum": 0
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "energy": {
+                        "type": "object",
+                        "description": "Energy-related requirements and renewable-energy potential within the sector.",
+                        "properties": {
+                            "rooftop_solar": {
+                                "type": "boolean"
+                            },
+                            "solar_coverage_target": {
+                                "$ref": "#/$defs/ratio"
+                            },
+                            "district_energy": {
+                                "type": "boolean"
+                            },
+                            "battery_storage": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "constraints": {
+                        "type": "object",
+                        "description": "Sector-specific constraints that the planner and generator must respect.",
+                        "properties": {
+                            "maximum_slope": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 90
+                            },
+                            "avoid_floodplain": {
+                                "type": "boolean"
+                            },
+                            "avoid_water": {
+                                "type": "boolean"
+                            },
+                            "protected": {
+                                "type": "boolean"
+                            },
+                            "development_priority": {
+                                "type": "string",
+                                "enum": [
+                                    "restricted",
+                                    "low",
+                                    "normal",
+                                    "high",
+                                    "priority"
+                                ]
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "road_graph": {
+            "type": "object",
+            "description": "Hierarchical transportation graph defining the primary road structure and major connectivity of the city.",
+            "required": [
+                "nodes",
+                "edges",
+                "hierarchy",
+                "connectivity"
+            ],
+            "properties": {
+                "nodes": {
+                    "type": "array",
+                    "description": "Important intersections, transportation hubs, gateways, and connection points in the road network.",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "position",
+                            "type"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+                            },
+                            "position": {
+                                "$ref": "#/$defs/position"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "intersection",
+                                    "junction",
+                                    "roundabout",
+                                    "transit_hub",
+                                    "gateway",
+                                    "bridge",
+                                    "tunnel",
+                                    "dead_end"
+                                ]
+                            },
+                            "capacity": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "description": "Approximate number of road connections the node can support."
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "minItems": 1
+                },
+                "edges": {
+                    "type": "array",
+                    "description": "Road segments connecting nodes in the primary transportation network.",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "from",
+                            "to",
+                            "type",
+                            "geometry"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+                            },
+                            "from": {
+                                "type": "string"
+                            },
+                            "to": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "motorway",
                                     "arterial",
                                     "collector",
                                     "local",
@@ -198,101 +1566,2114 @@
                                     "cycle"
                                 ]
                             },
-
+                            "geometry": {
+                                "type": "object",
+                                "required": [
+                                    "routing"
+                                ],
+                                "properties": {
+                                    "routing": {
+                                        "type": "string",
+                                        "enum": [
+                                            "straight",
+                                            "orthogonal",
+                                            "curved",
+                                            "custom"
+                                        ]
+                                    },
+                                    "waypoints": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/$defs/position"
+                                        },
+                                        "minItems": 2
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
                             "width": {
                                 "type": "number",
                                 "exclusiveMinimum": 0
+                            },
+                            "lanes": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "speed_limit": {
+                                "type": "number",
+                                "exclusiveMinimum": 0
+                            },
+                            "one_way": {
+                                "type": "boolean"
+                            },
+                            "sidewalk": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "cycling": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    },
+                                    "separated": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "street_trees": {
+                                "type": "object",
+                                "properties": {
+                                    "enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "spacing": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "street_lighting": {
+                                "type": "boolean"
+                            },
+                            "public_transport": {
+                                "type": "boolean"
                             }
                         },
-
                         "additionalProperties": false
-                    }
+                    },
+                    "minItems": 1
+                },
+                "hierarchy": {
+                    "type": "object",
+                    "description": "Default physical and functional characteristics for each road class.",
+                    "required": [
+                        "arterial",
+                        "collector",
+                        "local"
+                    ],
+                    "properties": {
+                        "arterial": {
+                            "$ref": "#/$defs/road_class"
+                        },
+                        "collector": {
+                            "$ref": "#/$defs/road_class"
+                        },
+                        "local": {
+                            "$ref": "#/$defs/road_class"
+                        },
+                        "pedestrian": {
+                            "$ref": "#/$defs/road_class"
+                        },
+                        "cycle": {
+                            "$ref": "#/$defs/road_class"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "connectivity": {
+                    "type": "object",
+                    "description": "Network-level connectivity requirements used to evaluate the road system.",
+                    "required": [
+                        "minimum_node_degree",
+                        "maximum_dead_end_ratio"
+                    ],
+                    "properties": {
+                        "minimum_node_degree": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "maximum_dead_end_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "maximum_intersection_spacing": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "target_network_density": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "require_sector_connections": {
+                            "type": "boolean"
+                        },
+                        "require_transit_connections": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "generation": {
+                    "type": "object",
+                    "description": "Rules controlling procedural generation of the road network.",
+                    "required": [
+                        "primary_pattern"
+                    ],
+                    "properties": {
+                        "primary_pattern": {
+                            "type": "string",
+                            "enum": [
+                                "grid",
+                                "organic",
+                                "radial",
+                                "radial_grid",
+                                "ring",
+                                "hybrid"
+                            ]
+                        },
+                        "orientation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360
+                        },
+                        "arterial_spacing": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "collector_spacing": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "follow_terrain": {
+                            "type": "boolean"
+                        },
+                        "avoid_steep_slopes": {
+                            "type": "boolean"
+                        },
+                        "maximum_slope": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 90
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
-
             "additionalProperties": false
         },
-
-        "energy_zones": {
-            "type": "array",
-
-            "items": {
-                "type": "object",
-
-                "required": ["id", "type", "sector", "capacity"],
-
-                "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-
-                    "type": {
-                        "type": "string",
-                        "enum": ["solar", "wind", "hydro", "battery", "grid", "substation"]
-                    },
-
-                    "sector": {
-                        "type": "string"
-                    },
-
-                    "capacity": {
-                        "type": "number",
-                        "minimum": 0
-                    },
-
-                    "unit": {
-                        "type": "string",
-                        "enum": ["MW", "MWh"]
-                    }
-                },
-
-                "additionalProperties": false
-            }
-        },
-
-        "environment": {
+        "blocks": {
             "type": "object",
-
-            "required": ["minimum_green_ratio"],
-
+            "description": "Rules for generating developable urban blocks from the road network and defining their geometry, subdivision, and development.",
+            "required": [
+                "generation",
+                "size",
+                "shape",
+                "subdivision",
+                "development"
+            ],
             "properties": {
-                "minimum_green_ratio": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                },
-
-                "water_bodies": {
-                    "type": "array",
-
-                    "items": {
-                        "type": "object",
-
-                        "required": ["id", "bounds"],
-
-                        "properties": {
-                            "id": {
-                                "type": "string"
-                            },
-
-                            "bounds": {
-                                "type": "array",
-                                "minItems": 4,
-                                "maxItems": 4,
-                                "items": {
-                                    "type": "number"
-                                }
-                            }
+                "generation": {
+                    "type": "object",
+                    "required": [
+                        "method"
+                    ],
+                    "properties": {
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "road_bounded",
+                                "grid",
+                                "sector_grid",
+                                "organic",
+                                "hybrid"
+                            ]
                         },
-
-                        "additionalProperties": false
-                    }
+                        "respect_sector_boundaries": {
+                            "type": "boolean"
+                        },
+                        "respect_road_hierarchy": {
+                            "type": "boolean"
+                        },
+                        "arterial_block_boundary": {
+                            "type": "boolean"
+                        },
+                        "collector_block_boundary": {
+                            "type": "boolean"
+                        },
+                        "allow_irregular_blocks": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "size": {
+                    "type": "object",
+                    "required": [
+                        "minimum_area",
+                        "maximum_area",
+                        "minimum_width",
+                        "maximum_width",
+                        "minimum_depth",
+                        "maximum_depth"
+                    ],
+                    "properties": {
+                        "minimum_area": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_area": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "minimum_width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "minimum_depth": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_depth": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "preferred_area": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "preferred_aspect_ratio": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_aspect_ratio": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "shape": {
+                    "type": "object",
+                    "required": [
+                        "preferred"
+                    ],
+                    "properties": {
+                        "preferred": {
+                            "type": "string",
+                            "enum": [
+                                "rectangular",
+                                "square",
+                                "elongated",
+                                "irregular",
+                                "triangular",
+                                "mixed"
+                            ]
+                        },
+                        "regularity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        "corner_treatment": {
+                            "type": "string",
+                            "enum": [
+                                "sharp",
+                                "rounded",
+                                "chamfered",
+                                "mixed"
+                            ]
+                        },
+                        "minimum_angle": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 180
+                        },
+                        "maximum_angle": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 180
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "subdivision": {
+                    "type": "object",
+                    "required": [
+                        "enabled"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "grid",
+                                "frontage_based",
+                                "density_based",
+                                "organic"
+                            ]
+                        },
+                        "minimum_plot_area": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_plot_area": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "minimum_frontage": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_frontage": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "minimum_depth": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_depth": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "internal_access": {
+                            "type": "boolean"
+                        },
+                        "internal_road_width": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "development": {
+                    "type": "object",
+                    "required": [
+                        "maximum_building_coverage"
+                    ],
+                    "properties": {
+                        "maximum_building_coverage": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "preferred_building_coverage": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "minimum_open_space": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "minimum_green_space": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "courtyard_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "frontage_activation": {
+                            "type": "string",
+                            "enum": [
+                                "none",
+                                "low",
+                                "medium",
+                                "high"
+                            ]
+                        },
+                        "parking": {
+                            "type": "object",
+                            "properties": {
+                                "allowed": {
+                                    "type": "boolean"
+                                },
+                                "maximum_surface_ratio": {
+                                    "$ref": "#/$defs/ratio"
+                                },
+                                "underground_preferred": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
-
+            "additionalProperties": false
+        },
+        "buildings": {
+            "type": "object",
+            "description": "Global building archetypes and physical rules used to generate buildings within urban plots and sectors.",
+            "required": [
+                "archetypes",
+                "generation",
+                "orientation",
+                "spacing",
+                "sustainability"
+            ],
+            "properties": {
+                "archetypes": {
+                    "type": "array",
+                    "description": "Reusable building types that sectors can reference through their building_rules.",
+                    "minItems": 1,
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "id",
+                            "type",
+                            "height",
+                            "footprint"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+                            },
+                            "type": {
+                                "type": "string",
+                                "enum": [
+                                    "house",
+                                    "apartment",
+                                    "tower",
+                                    "office",
+                                    "retail",
+                                    "mixed_use",
+                                    "industrial",
+                                    "warehouse",
+                                    "school",
+                                    "hospital",
+                                    "government",
+                                    "community",
+                                    "parking",
+                                    "utility"
+                                ]
+                            },
+                            "height": {
+                                "type": "object",
+                                "required": [
+                                    "minimum_floors",
+                                    "maximum_floors"
+                                ],
+                                "properties": {
+                                    "minimum_floors": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "maximum_floors": {
+                                        "type": "integer",
+                                        "minimum": 1
+                                    },
+                                    "floor_height": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "footprint": {
+                                "type": "object",
+                                "required": [
+                                    "minimum_width",
+                                    "maximum_width",
+                                    "minimum_depth",
+                                    "maximum_depth"
+                                ],
+                                "properties": {
+                                    "minimum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_width": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "minimum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    },
+                                    "maximum_depth": {
+                                        "type": "number",
+                                        "exclusiveMinimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "density": {
+                                "type": "string",
+                                "enum": [
+                                    "low",
+                                    "medium",
+                                    "high",
+                                    "very_high"
+                                ]
+                            },
+                            "mixed_use": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                },
+                "generation": {
+                    "type": "object",
+                    "description": "Controls how buildings are distributed and generated within their available plots.",
+                    "required": [
+                        "distribution",
+                        "placement"
+                    ],
+                    "properties": {
+                        "distribution": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "density_weighted",
+                                "road_weighted",
+                                "center_weighted",
+                                "random"
+                            ]
+                        },
+                        "placement": {
+                            "type": "string",
+                            "enum": [
+                                "plot_based",
+                                "block_based",
+                                "grid",
+                                "organic"
+                            ]
+                        },
+                        "seed": {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        "maximum_buildings_per_block": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "orientation": {
+                    "type": "object",
+                    "description": "Global rules for building orientation.",
+                    "required": [
+                        "mode"
+                    ],
+                    "properties": {
+                        "mode": {
+                            "type": "string",
+                            "enum": [
+                                "free",
+                                "road_aligned",
+                                "grid_aligned",
+                                "solar_aligned",
+                                "wind_aligned"
+                            ]
+                        },
+                        "preferred_angle": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 360
+                        },
+                        "variation": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 180
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "spacing": {
+                    "type": "object",
+                    "description": "Minimum spatial separation between generated buildings.",
+                    "required": [
+                        "minimum_building_gap"
+                    ],
+                    "properties": {
+                        "minimum_building_gap": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximum_building_gap": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimum_front_setback": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimum_side_setback": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "minimum_rear_setback": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "sustainability": {
+                    "type": "object",
+                    "description": "Building-level sustainability requirements used by the city generator and sustainability analysis.",
+                    "properties": {
+                        "rooftop_solar_allowed": {
+                            "type": "boolean"
+                        },
+                        "rooftop_solar_required": {
+                            "type": "boolean"
+                        },
+                        "solar_coverage_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "green_roof_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "green_wall_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "rainwater_collection": {
+                            "type": "boolean"
+                        },
+                        "passive_cooling": {
+                            "type": "boolean"
+                        },
+                        "natural_ventilation": {
+                            "type": "boolean"
+                        },
+                        "energy_efficiency": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "efficient",
+                                "high_efficiency",
+                                "net_zero"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "transport": {
+            "type": "object",
+            "description": "City-wide transportation strategy defining mobility modes, transit, pedestrian and cycling infrastructure, parking, and accessibility requirements.",
+            "required": [
+                "mode_share",
+                "public_transport",
+                "walking",
+                "cycling",
+                "roads",
+                "parking",
+                "accessibility"
+            ],
+            "properties": {
+                "mode_share": {
+                    "type": "object",
+                    "description": "Target percentage of trips made using each transportation mode.",
+                    "required": [
+                        "walking",
+                        "cycling",
+                        "public_transport",
+                        "private_vehicle"
+                    ],
+                    "properties": {
+                        "walking": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "cycling": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "public_transport": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "private_vehicle": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "other": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "public_transport": {
+                    "type": "object",
+                    "description": "Public transportation network and service requirements.",
+                    "required": [
+                        "enabled",
+                        "modes",
+                        "coverage"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "modes": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "bus",
+                                    "brt",
+                                    "tram",
+                                    "metro",
+                                    "rail",
+                                    "light_rail",
+                                    "shuttle"
+                                ]
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        },
+                        "coverage": {
+                            "type": "object",
+                            "required": [
+                                "maximum_walk_distance",
+                                "minimum_population_coverage"
+                            ],
+                            "properties": {
+                                "maximum_walk_distance": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0
+                                },
+                                "minimum_population_coverage": {
+                                    "$ref": "#/$defs/ratio"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "stops": {
+                            "type": "object",
+                            "properties": {
+                                "minimum_spacing": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0
+                                },
+                                "maximum_spacing": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "priority": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "walking": {
+                    "type": "object",
+                    "description": "Pedestrian infrastructure requirements.",
+                    "required": [
+                        "enabled",
+                        "minimum_sidewalk_width",
+                        "maximum_distance_to_daily_services"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "minimum_sidewalk_width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "maximum_distance_to_daily_services": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "pedestrian_priority_zones": {
+                            "type": "boolean"
+                        },
+                        "traffic_calming": {
+                            "type": "boolean"
+                        },
+                        "shade_required": {
+                            "type": "boolean"
+                        },
+                        "universal_access": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "cycling": {
+                    "type": "object",
+                    "description": "Cycling network and infrastructure requirements.",
+                    "required": [
+                        "enabled",
+                        "minimum_lane_width",
+                        "separated_from_traffic"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "minimum_lane_width": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "separated_from_traffic": {
+                            "type": "boolean"
+                        },
+                        "maximum_distance_to_cycle_network": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "bike_parking": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "roads": {
+                    "type": "object",
+                    "description": "City-wide road traffic management requirements. Major road geometry is defined by road_graph.",
+                    "properties": {
+                        "private_vehicle_priority": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high"
+                            ]
+                        },
+                        "traffic_calming": {
+                            "type": "boolean"
+                        },
+                        "low_emission_zones": {
+                            "type": "boolean"
+                        },
+                        "freight_routes": {
+                            "type": "boolean"
+                        },
+                        "emergency_route_access": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "parking": {
+                    "type": "object",
+                    "description": "Parking strategy and limits.",
+                    "required": [
+                        "strategy"
+                    ],
+                    "properties": {
+                        "strategy": {
+                            "type": "string",
+                            "enum": [
+                                "minimum",
+                                "balanced",
+                                "reduced",
+                                "car_free"
+                            ]
+                        },
+                        "maximum_surface_parking_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "underground_parking_preferred": {
+                            "type": "boolean"
+                        },
+                        "park_and_ride": {
+                            "type": "boolean"
+                        },
+                        "ev_charging": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "accessibility": {
+                    "type": "object",
+                    "description": "Accessibility requirements for the transportation network.",
+                    "required": [
+                        "universal_design"
+                    ],
+                    "properties": {
+                        "universal_design": {
+                            "type": "boolean"
+                        },
+                        "maximum_gradient": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                        },
+                        "accessible_transit": {
+                            "type": "boolean"
+                        },
+                        "accessible_crossings": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "water": {
+            "type": "object",
+            "description": "City-wide water management strategy covering supply, distribution, consumption, drainage, stormwater, wastewater, and water conservation.",
+            "required": [
+                "supply",
+                "distribution",
+                "consumption",
+                "stormwater",
+                "wastewater",
+                "conservation"
+            ],
+            "properties": {
+                "supply": {
+                    "type": "object",
+                    "description": "Water sources and required supply capacity.",
+                    "required": [
+                        "sources",
+                        "reliability"
+                    ],
+                    "properties": {
+                        "sources": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "surface_water",
+                                    "groundwater",
+                                    "rainwater",
+                                    "desalination",
+                                    "recycled_water",
+                                    "imported_water"
+                                ]
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        },
+                        "daily_capacity": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Available daily water supply capacity in cubic meters."
+                        },
+                        "reliability": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "groundwater_recharge": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "distribution": {
+                    "type": "object",
+                    "description": "Rules for distributing potable and non-potable water throughout the city.",
+                    "required": [
+                        "potable_network",
+                        "non_potable_network"
+                    ],
+                    "properties": {
+                        "potable_network": {
+                            "type": "boolean"
+                        },
+                        "non_potable_network": {
+                            "type": "boolean"
+                        },
+                        "district_metering": {
+                            "type": "boolean"
+                        },
+                        "leakage_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "storage_required": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "consumption": {
+                    "type": "object",
+                    "description": "Water demand targets and consumption assumptions.",
+                    "required": [
+                        "target_per_capita_daily"
+                    ],
+                    "properties": {
+                        "target_per_capita_daily": {
+                            "type": "number",
+                            "exclusiveMinimum": 0,
+                            "description": "Target daily water consumption per person in liters."
+                        },
+                        "maximum_per_capita_daily": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "industrial_reuse_required": {
+                            "type": "boolean"
+                        },
+                        "greywater_reuse": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "stormwater": {
+                    "type": "object",
+                    "description": "Stormwater management and flood mitigation strategy.",
+                    "required": [
+                        "strategy",
+                        "retention_required"
+                    ],
+                    "properties": {
+                        "strategy": {
+                            "type": "string",
+                            "enum": [
+                                "conventional_drainage",
+                                "sustainable_drainage",
+                                "nature_based",
+                                "hybrid"
+                            ]
+                        },
+                        "retention_required": {
+                            "type": "boolean"
+                        },
+                        "infiltration_required": {
+                            "type": "boolean"
+                        },
+                        "permeable_surface_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "rain_gardens": {
+                            "type": "boolean"
+                        },
+                        "bioswales": {
+                            "type": "boolean"
+                        },
+                        "retention_ponds": {
+                            "type": "boolean"
+                        },
+                        "flood_protection_level": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "moderate",
+                                "high",
+                                "very_high"
+                            ]
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "wastewater": {
+                    "type": "object",
+                    "description": "Wastewater collection, treatment, and reuse strategy.",
+                    "required": [
+                        "treatment",
+                        "reuse_target"
+                    ],
+                    "properties": {
+                        "treatment": {
+                            "type": "string",
+                            "enum": [
+                                "centralized",
+                                "decentralized",
+                                "hybrid"
+                            ]
+                        },
+                        "reuse_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "treated_water_uses": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "irrigation",
+                                    "industrial",
+                                    "toilet_flushing",
+                                    "cooling",
+                                    "groundwater_recharge",
+                                    "environmental_flow"
+                                ]
+                            },
+                            "uniqueItems": true
+                        },
+                        "sewage_treatment_required": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "conservation": {
+                    "type": "object",
+                    "description": "Water conservation requirements applied across buildings, landscapes, and infrastructure.",
+                    "required": [
+                        "rainwater_harvesting",
+                        "water_efficient_landscaping"
+                    ],
+                    "properties": {
+                        "rainwater_harvesting": {
+                            "type": "boolean"
+                        },
+                        "water_efficient_landscaping": {
+                            "type": "boolean"
+                        },
+                        "native_vegetation_preferred": {
+                            "type": "boolean"
+                        },
+                        "irrigation_efficiency_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "water_reuse_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "energy_zones": {
+            "type": "object",
+            "description": "City-wide renewable energy generation, storage, distribution, and energy infrastructure zones.",
+            "required": [
+                "generation",
+                "storage",
+                "distribution",
+                "zoning"
+            ],
+            "properties": {
+                "generation": {
+                    "type": "object",
+                    "description": "Renewable and conventional energy generation targets and sources.",
+                    "required": [
+                        "sources",
+                        "renewable_target"
+                    ],
+                    "properties": {
+                        "sources": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "solar",
+                                    "wind",
+                                    "hydro",
+                                    "geothermal",
+                                    "biomass",
+                                    "waste_to_energy",
+                                    "grid"
+                                ]
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        },
+                        "renewable_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "solar": {
+                            "type": "object",
+                            "properties": {
+                                "preferred": {
+                                    "type": "boolean"
+                                },
+                                "minimum_capacity_mw": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "maximum_capacity_mw": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "rooftop_generation": {
+                                    "type": "boolean"
+                                },
+                                "ground_mounted_generation": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "additionalProperties": false
+                        },
+                        "wind": {
+                            "type": "object",
+                            "properties": {
+                                "preferred": {
+                                    "type": "boolean"
+                                },
+                                "minimum_capacity_mw": {
+                                    "type": "number",
+                                    "minimum": 0
+                                },
+                                "maximum_capacity_mw": {
+                                    "type": "number",
+                                    "minimum": 0
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "storage": {
+                    "type": "object",
+                    "description": "Energy storage requirements and technologies.",
+                    "required": [
+                        "enabled"
+                    ],
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "technologies": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "battery",
+                                    "pumped_hydro",
+                                    "thermal",
+                                    "hydrogen"
+                                ]
+                            },
+                            "uniqueItems": true
+                        },
+                        "minimum_capacity_mwh": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximum_capacity_mwh": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "distributed_storage": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "distribution": {
+                    "type": "object",
+                    "description": "Energy distribution and grid architecture requirements.",
+                    "required": [
+                        "grid_connected"
+                    ],
+                    "properties": {
+                        "grid_connected": {
+                            "type": "boolean"
+                        },
+                        "microgrids": {
+                            "type": "boolean"
+                        },
+                        "smart_grid": {
+                            "type": "boolean"
+                        },
+                        "district_energy": {
+                            "type": "boolean"
+                        },
+                        "maximum_transmission_loss": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "backup_generation": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "zoning": {
+                    "type": "object",
+                    "description": "Rules controlling where energy infrastructure can be located.",
+                    "required": [
+                        "renewable_zones",
+                        "utility_zones"
+                    ],
+                    "properties": {
+                        "renewable_zones": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "type",
+                                    "priority"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "solar_farm",
+                                            "wind_farm",
+                                            "rooftop_solar",
+                                            "biomass",
+                                            "waste_to_energy"
+                                        ]
+                                    },
+                                    "priority": {
+                                        "type": "string",
+                                        "enum": [
+                                            "low",
+                                            "medium",
+                                            "high",
+                                            "very_high"
+                                        ]
+                                    },
+                                    "minimum_area": {
+                                        "type": "number",
+                                        "minimum": 0
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "utility_zones": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "substation",
+                                    "battery_storage",
+                                    "transformer",
+                                    "district_energy",
+                                    "charging_hub"
+                                ]
+                            },
+                            "uniqueItems": true
+                        },
+                        "avoid_residential": {
+                            "type": "boolean"
+                        },
+                        "avoid_water": {
+                            "type": "boolean"
+                        },
+                        "avoid_protected_land": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "vegetation": {
+            "type": "object",
+            "description": "City-wide vegetation strategy defining green-space distribution, vegetation types, tree coverage, biodiversity, and landscape generation.",
+            "required": [
+                "green_space",
+                "trees",
+                "planting",
+                "biodiversity",
+                "generation"
+            ],
+            "properties": {
+                "green_space": {
+                    "type": "object",
+                    "description": "Distribution and coverage targets for urban green spaces.",
+                    "required": [
+                        "minimum_ratio",
+                        "types"
+                    ],
+                    "properties": {
+                        "minimum_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "target_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "types": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "park",
+                                    "forest",
+                                    "wetland",
+                                    "urban_forest",
+                                    "green_corridor",
+                                    "community_garden",
+                                    "street_green",
+                                    "green_buffer",
+                                    "recreation",
+                                    "agriculture"
+                                ]
+                            },
+                            "minItems": 1,
+                            "uniqueItems": true
+                        },
+                        "connectivity_required": {
+                            "type": "boolean"
+                        },
+                        "maximum_distance_to_green_space": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "trees": {
+                    "type": "object",
+                    "description": "Urban tree canopy and planting requirements.",
+                    "required": [
+                        "canopy_target"
+                    ],
+                    "properties": {
+                        "canopy_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "minimum_tree_density": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Minimum number of trees per hectare."
+                        },
+                        "street_tree_spacing": {
+                            "type": "number",
+                            "exclusiveMinimum": 0
+                        },
+                        "native_species_preferred": {
+                            "type": "boolean"
+                        },
+                        "shade_priority": {
+                            "type": "boolean"
+                        },
+                        "mature_canopy_required": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "planting": {
+                    "type": "object",
+                    "description": "Rules governing vegetation placement and landscape design.",
+                    "required": [
+                        "strategy"
+                    ],
+                    "properties": {
+                        "strategy": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "clustered",
+                                "corridor_based",
+                                "native_ecology",
+                                "mixed"
+                            ]
+                        },
+                        "native_species_only": {
+                            "type": "boolean"
+                        },
+                        "drought_tolerant_preferred": {
+                            "type": "boolean"
+                        },
+                        "water_efficient": {
+                            "type": "boolean"
+                        },
+                        "green_roofs": {
+                            "type": "boolean"
+                        },
+                        "green_walls": {
+                            "type": "boolean"
+                        },
+                        "rain_gardens": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "biodiversity": {
+                    "type": "object",
+                    "description": "Requirements for preserving and improving urban biodiversity.",
+                    "required": [
+                        "priority"
+                    ],
+                    "properties": {
+                        "priority": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "wildlife_corridors": {
+                            "type": "boolean"
+                        },
+                        "habitat_zones": {
+                            "type": "boolean"
+                        },
+                        "protected_natural_areas": {
+                            "type": "boolean"
+                        },
+                        "minimum_habitat_ratio": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "native_species_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "generation": {
+                    "type": "object",
+                    "description": "Procedural generation parameters for vegetation placement.",
+                    "required": [
+                        "distribution",
+                        "density"
+                    ],
+                    "properties": {
+                        "distribution": {
+                            "type": "string",
+                            "enum": [
+                                "uniform",
+                                "random",
+                                "noise",
+                                "density_weighted",
+                                "terrain_weighted",
+                                "hybrid"
+                            ]
+                        },
+                        "density": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "seed": {
+                            "type": "integer",
+                            "minimum": 0
+                        },
+                        "terrain_adaptation": {
+                            "type": "boolean"
+                        },
+                        "water_adaptation": {
+                            "type": "boolean"
+                        },
+                        "avoid_buildings": {
+                            "type": "boolean"
+                        },
+                        "avoid_roads": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "environment": {
+            "type": "object",
+            "description": "City-wide environmental protection, resilience, pollution control, resource efficiency, and ecological performance requirements.",
+            "required": [
+                "air_quality",
+                "noise",
+                "climate_resilience",
+                "pollution",
+                "natural_resources"
+            ],
+            "properties": {
+                "air_quality": {
+                    "type": "object",
+                    "description": "Requirements for maintaining and improving urban air quality.",
+                    "required": [
+                        "target"
+                    ],
+                    "properties": {
+                        "target": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "good",
+                                "very_good",
+                                "excellent"
+                            ]
+                        },
+                        "pollution_control": {
+                            "type": "boolean"
+                        },
+                        "green_buffers": {
+                            "type": "boolean"
+                        },
+                        "industrial_separation": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "noise": {
+                    "type": "object",
+                    "description": "Urban noise management requirements.",
+                    "required": [
+                        "control_required"
+                    ],
+                    "properties": {
+                        "control_required": {
+                            "type": "boolean"
+                        },
+                        "maximum_daytime_db": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximum_nighttime_db": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "quiet_zones": {
+                            "type": "boolean"
+                        },
+                        "noise_buffers": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "climate_resilience": {
+                    "type": "object",
+                    "description": "Measures for adapting the city to climate and extreme weather risks.",
+                    "required": [
+                        "priority"
+                    ],
+                    "properties": {
+                        "priority": {
+                            "type": "string",
+                            "enum": [
+                                "low",
+                                "medium",
+                                "high",
+                                "very_high"
+                            ]
+                        },
+                        "heat_resilience": {
+                            "type": "boolean"
+                        },
+                        "flood_resilience": {
+                            "type": "boolean"
+                        },
+                        "drought_resilience": {
+                            "type": "boolean"
+                        },
+                        "storm_resilience": {
+                            "type": "boolean"
+                        },
+                        "sea_level_rise_resilience": {
+                            "type": "boolean"
+                        },
+                        "maximum_urban_heat_island_intensity": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "pollution": {
+                    "type": "object",
+                    "description": "Requirements for controlling environmental pollution.",
+                    "required": [
+                        "air",
+                        "water",
+                        "soil"
+                    ],
+                    "properties": {
+                        "air": {
+                            "type": "boolean"
+                        },
+                        "water": {
+                            "type": "boolean"
+                        },
+                        "soil": {
+                            "type": "boolean"
+                        },
+                        "light": {
+                            "type": "boolean"
+                        },
+                        "industrial_emission_controls": {
+                            "type": "boolean"
+                        },
+                        "waste_management": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "natural_resources": {
+                    "type": "object",
+                    "description": "Requirements for protecting natural resources and environmentally sensitive areas.",
+                    "required": [
+                        "protected_areas",
+                        "resource_efficiency"
+                    ],
+                    "properties": {
+                        "protected_areas": {
+                            "type": "boolean"
+                        },
+                        "resource_efficiency": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "efficient",
+                                "high_efficiency",
+                                "maximum"
+                            ]
+                        },
+                        "soil_protection": {
+                            "type": "boolean"
+                        },
+                        "groundwater_protection": {
+                            "type": "boolean"
+                        },
+                        "wetland_protection": {
+                            "type": "boolean"
+                        },
+                        "deforestation_avoidance": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "sustainability": {
+            "type": "object",
+            "description": "City-wide sustainability targets and performance criteria used to evaluate the environmental, energy, mobility, water, and resource efficiency of the planned city.",
+            "required": [
+                "energy",
+                "transport",
+                "water",
+                "land",
+                "environment",
+                "resource_efficiency"
+            ],
+            "properties": {
+                "energy": {
+                    "type": "object",
+                    "description": "Targets for renewable energy, energy efficiency, and grid independence.",
+                    "required": [
+                        "renewable_share_target",
+                        "energy_efficiency_target"
+                    ],
+                    "properties": {
+                        "renewable_share_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "energy_efficiency_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "grid_dependency_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "energy_storage_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "net_zero_target": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "transport": {
+                    "type": "object",
+                    "description": "Sustainability targets for urban mobility.",
+                    "required": [
+                        "sustainable_mode_share"
+                    ],
+                    "properties": {
+                        "sustainable_mode_share": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "maximum_average_commute_distance": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "maximum_average_commute_time": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "vehicle_emission_target": {
+                            "type": "number",
+                            "minimum": 0
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "water": {
+                    "type": "object",
+                    "description": "Targets for water conservation, reuse, and resource efficiency.",
+                    "required": [
+                        "water_reuse_target",
+                        "water_loss_target"
+                    ],
+                    "properties": {
+                        "water_reuse_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "water_loss_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "rainwater_capture_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "groundwater_recharge_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "land": {
+                    "type": "object",
+                    "description": "Targets for efficient and environmentally responsible land use.",
+                    "required": [
+                        "green_space_target",
+                        "built_land_target"
+                    ],
+                    "properties": {
+                        "green_space_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "built_land_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "protected_land_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "permeable_surface_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "environment": {
+                    "type": "object",
+                    "description": "Environmental performance targets for the city.",
+                    "required": [
+                        "carbon_emission_target",
+                        "air_quality_target"
+                    ],
+                    "properties": {
+                        "carbon_emission_target": {
+                            "type": "number",
+                            "minimum": 0,
+                            "description": "Target annual carbon emissions per capita in kilograms of CO2 equivalent."
+                        },
+                        "air_quality_target": {
+                            "type": "string",
+                            "enum": [
+                                "standard",
+                                "good",
+                                "very_good",
+                                "excellent"
+                            ]
+                        },
+                        "urban_heat_reduction_target": {
+                            "type": "number",
+                            "minimum": 0
+                        },
+                        "biodiversity_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "resource_efficiency": {
+                    "type": "object",
+                    "description": "Targets for minimizing resource consumption and waste.",
+                    "required": [
+                        "waste_recycling_target"
+                    ],
+                    "properties": {
+                        "waste_recycling_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "waste_to_landfill_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "material_reuse_target": {
+                            "$ref": "#/$defs/ratio"
+                        },
+                        "circular_economy_target": {
+                            "$ref": "#/$defs/ratio"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "generation": {
+            "type": "object",
+            "description": "Global procedural generation settings controlling determinism, detail, randomness, and generation behavior of the city.",
+            "required": [
+                "seed",
+                "deterministic",
+                "detail_level"
+            ],
+            "properties": {
+                "seed": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Seed used to produce deterministic procedural generation."
+                },
+                "deterministic": {
+                    "type": "boolean",
+                    "description": "Whether identical inputs and seed values must produce the same city."
+                },
+                "detail_level": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "ultra"
+                    ]
+                },
+                "terrain_detail": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "ultra"
+                    ]
+                },
+                "building_detail": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "ultra"
+                    ]
+                },
+                "vegetation_detail": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "ultra"
+                    ]
+                },
+                "road_detail": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "ultra"
+                    ]
+                },
+                "randomness": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Amount of controlled variation introduced during procedural generation."
+                },
+                "lod": {
+                    "type": "object",
+                    "description": "Level-of-detail settings for large cities and real-time rendering.",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "distances": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "minimum": 0
+                            },
+                            "minItems": 1
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "coordinate_precision": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Precision in meters used when generating and placing procedural geometry."
+                }
+            },
             "additionalProperties": false
         }
     },
-
-    "additionalProperties": false
+    "$defs": {
+        "ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Ratio represented as a value between 0 and 1."
+        },
+        "distance": {
+            "type": "object",
+            "required": [
+                "minimum",
+                "preferred",
+                "maximum"
+            ],
+            "properties": {
+                "minimum": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "preferred": {
+                    "type": "number",
+                    "minimum": 0
+                },
+                "maximum": {
+                    "type": "number",
+                    "minimum": 0
+                }
+            },
+            "additionalProperties": false
+        },
+        "position": {
+            "type": "array",
+            "description": "[x, z] position coordinates in meters.",
+            "prefixItems": [
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "number"
+                }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "road_class": {
+            "type": "object",
+            "properties": {
+                "default_width": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "default_lanes": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "default_speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                },
+                "sidewalk": {
+                    "type": "boolean"
+                },
+                "cycling": {
+                    "type": "boolean"
+                },
+                "street_lighting": {
+                    "type": "boolean"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
 }

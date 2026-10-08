@@ -4,8 +4,8 @@ using UnityEngine.InputSystem;
 public class FreeFlyCamera : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 80f;
-    [SerializeField] private float fastSpeed = 200f;
+    [SerializeField] private float moveSpeed = 300f;
+    [SerializeField] private float fastSpeed = 1000f;
 
     [Header("Mouse Look")]
     [SerializeField] private float mouseSensitivity = 0.15f;
@@ -31,27 +31,33 @@ public class FreeFlyCamera : MonoBehaviour
         HandleMouse();
         HandleMovement();
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame) {
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) {
             ReleaseMouse();
         }
-        if (Mouse.current.leftButton.wasPressedThisFrame) {
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) {
             CaptureMouse();
         }
     }
 
     private void HandleMouse() {
-        if (!mouseCaptured)
+        if (!mouseCaptured || Mouse.current == null)
             return;
 
         Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-        yaw += mouseDelta.x * mouseSensitivity;
-        pitch -= mouseDelta.y * mouseSensitivity;
-        pitch = Mathf.Clamp(pitch, -maxPitch, maxPitch);
-        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+        if (mouseDelta.sqrMagnitude > 0.001f)
+        {
+            yaw += mouseDelta.x * mouseSensitivity;
+            pitch -= mouseDelta.y * mouseSensitivity;
+            pitch = Mathf.Clamp(pitch, -maxPitch, maxPitch);
+            transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
+        }
     }
 
     private void HandleMovement() {
         Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+            return;
+
         Vector3 direction = Vector3.zero;
 
         if (keyboard.wKey.isPressed)
@@ -83,5 +89,12 @@ public class FreeFlyCamera : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         mouseCaptured = false;
+    }
+
+    public void ResetOrientation(Vector3 eulerAngles) {
+        yaw = eulerAngles.y;
+        pitch = eulerAngles.x;
+        if (pitch > 180f) pitch -= 360f;
+        transform.rotation = Quaternion.Euler(pitch, yaw, 0f);
     }
 }
