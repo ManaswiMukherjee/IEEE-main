@@ -296,6 +296,10 @@ public sealed class EnergyGenerator
                 EnergySource src = panel.AddComponent<EnergySource>();
                 src.sourceType = EnergyType.Solar;
 
+                // Attach live tilt driver — listens to SolarTelemetryData.tiltDegrees each frame
+                SolarPanelTilter tilter = panel.AddComponent<SolarPanelTilter>();
+                tilter.Initialize(panelAzimuth, PanelTilt);
+
                 // Support leg
                 CreateCylinder("SolarSupport",
                     new Vector3(x, baseY + 0.35f, z),
@@ -431,6 +435,9 @@ public sealed class EnergyGenerator
             EnergySource src = unit.AddComponent<EnergySource>();
             src.sourceType = EnergyType.Storage;
 
+            // Live emission visualizer — pulses reflect SOC level and charge/discharge direction
+            unit.AddComponent<StorageVisualizer>();
+
             CreateCube("BatteryIndicator",
                 new Vector3(x + ox, groundY + 0.2f, z - 0.82f),
                 new Vector3(1.2f, 0.18f, 0.05f),
@@ -459,10 +466,12 @@ public sealed class EnergyGenerator
         {
             float ox = (i - 1) * 1.8f;
 
-            CreateCube("Transformer",
+            // Each transformer body drives a live emission visualizer reflecting grid state
+            GameObject transformer = CreateCube("Transformer",
                 new Vector3(x + ox, baseY + 0.9f, z),
                 new Vector3(1.1f, 1.2f, 1.2f),
                 _equipmentMaterial, sub);
+            transformer.AddComponent<SubstationVisualizer>();
 
             CreateCylinder("TransformerInsulator",
                 new Vector3(x + ox, baseY + 1.65f, z),
@@ -471,18 +480,20 @@ public sealed class EnergyGenerator
         }
 
         // Gantry
-        CreateCube("SubstationGantry",
+        GameObject gantry = CreateCube("SubstationGantry",
             new Vector3(x, baseY + 2.1f, z + 1.2f),
             new Vector3(5f, 0.12f, 0.12f),
             _panelFrameMaterial, sub);
+        gantry.AddComponent<SubstationVisualizer>();
 
         for (int i = 0; i < 3; i++)
         {
             float ox = (i - 1) * 2.2f;
-            CreateCube("GantryPost",
+            GameObject post = CreateCube("GantryPost",
                 new Vector3(x + ox, baseY + 1.1f, z + 1.2f),
                 new Vector3(0.1f, 1f, 0.1f),
                 _panelFrameMaterial, sub);
+            post.AddComponent<SubstationVisualizer>();
         }
     }
 
