@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://your-project.dev/schemas/city-model.schema.json",
+  "title": "Detailed Sustainable City Planner",
+  "description": "Richly detailed, renderable 3D city model. Reusable building_styles carry facade/window/roof detail; blocks reference a style and supply a footprint. Water bodies, grasslands (with tree detail), windmills and landmark towers are placed explicitly. A renderer instantiates varied, windowed buildings per block from its style, producing a realistic skyline rather than plain boxes.",
+  "type": "object",
+
+  "required": ["city", "terrain", "building_styles", "blocks", "roads", "water_bodies", "green_areas", "windmills", "environment"],
+  "additionalProperties": false,
+
+  "$defs": {
+    "point": {
+      "type": "array",
+      "description": "[x, y] in metres, origin (0,0), inside the city size.",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "range": {
+      "type": "array",
+      "description": "[min, max], min <= max.",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "bounds": {
+      "type": "array",
+      "description": "[x, y, w, d]: lower-left corner + width + depth, in metres.",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number", "exclusiveMinimum": 0 }, { "type": "number", "exclusiveMinimum": 0 }],
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "hexColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "polyline": { "type": "array", "items": { "$ref": "#/$defs/point" }, "minItems": 2 },
+    "polygon": { "type": "array", "items": { "$ref": "#/$defs/point" }, "minItems": 3 },
+
+    "facade": {
+      "type": "object",
+      "description": "How the renderer draws walls + windows for buildings of a style.",
+      "required": ["material", "window_pattern", "window_ratio"],
+      "additionalProperties": false,
+      "properties": {
+        "material": {
+          "type": "string",
+          "enum": ["glass_curtain", "punched_windows", "masonry", "brick", "concrete_panel", "steel", "industrial", "mixed_use"]
+        },
+        "window_pattern": {
+          "type": "string",
+          "description": "grid = regular window grid; horizontal_bands = ribbon windows; vertical_strips = tall mullions; full_curtain = continuous glazing; sparse = few small windows.",
+          "enum": ["grid", "horizontal_bands", "vertical_strips", "full_curtain", "sparse"]
+        },
+        "window_ratio": { "type": "number", "minimum": 0, "maximum": 1, "description": "Glazed fraction of the facade." },
+        "window_color": { "$ref": "#/$defs/hexColor" },
+        "frame_color": { "$ref": "#/$defs/hexColor" },
+        "spandrel_color": { "$ref": "#/$defs/hexColor", "description": "Colour of the band between window rows." },
+        "lit_ratio": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fraction of windows lit (for dusk/night)." }
+      }
+    }
+  },
+
+  "properties": {
+    "city": {
+      "type": "object",
+      "required": ["name", "seed", "size", "population_target"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "seed": { "type": "integer", "minimum": 0 },
+        "size": {
+          "type": "array",
+          "description": "[width, depth] in metres. width*depth/1e6 ~= area in km2.",
+          "prefixItems": [{ "type": "number", "exclusiveMinimum": 0 }, { "type": "number", "exclusiveMinimum": 0 }],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "population_target": { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "terrain": {
+      "type": "object",
+      "required": ["type", "height_scale"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["flat", "rolling", "hilly", "coastal", "mountainous"] },
+        "height_scale": { "type": "number", "minimum": 0 },
+        "ground_color": { "$ref": "#/$defs/hexColor" }
+      }
+    },
+
+    "building_styles": {
+      "type": "array",
+      "description": "Reusable building presets. Each block references one by id. This is where realistic detail lives (heights, facades, windows, roofs).",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "height_range", "floor_height", "facade"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]+$" },
+          "description": { "type": "string" },
+          "height_range": { "$ref": "#/$defs/range", "description": "[min,max] building height in metres (>=3)." },
+          "footprint_range": { "$ref": "#/$defs/range", "description": "[min,max] building side length in metres." },
+          "floor_height": { "type": "number", "minimum": 2.5, "maximum": 6, "description": "Metres per floor; floors = round(height/floor_height), which sets window rows." },
+          "coverage": { "type": "number", "minimum": 0, "maximum": 1, "description": "Fraction of a block this style fills (rest is street/yard)." },
+          "facade": { "$ref": "#/$defs/facade" },
+          "roof_types": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["flat", "pitched", "setback", "domed", "sawtooth", "stepped"] },
+            "minItems": 1
+          },
+          "rooftop_features": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["hvac", "antenna", "spire", "helipad", "water_tank", "roof_garden", "solar_panels", "parapet"] }
+          },
+          "wall_palette": {
+            "type": "array",
+            "description": "Wall/structure colours buildings of this style pick from.",
+            "items": { "$ref": "#/$defs/hexColor" },
+            "minItems": 1
+          },
+          "setback": {
+            "type": "object",
+            "description": "Tapered/tiered tower: narrower sections stacked upward.",
+            "additionalProperties": false,
+            "required": ["tiers"],
+            "properties": {
+              "tiers": { "type": "integer", "minimum": 1, "maximum": 6 },
+              "ratio": { "type": "number", "minimum": 0.3, "maximum": 1, "description": "Each tier's footprint relative to the one below." }
+            }
+          },
+          "podium": {
+            "type": "object",
+            "description": "Wider base below the tower (retail/parking plinth).",
+            "additionalProperties": false,
+            "required": ["height"],
+            "properties": {
+              "height": { "type": "number", "minimum": 1 },
+              "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          }
+        }
+      }
+    },
+
+    "blocks": {
+      "type": "array",
+      "description": "City blocks. Each references a building_styles id; the renderer fills the block with procedurally varied, windowed buildings of that style.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "zone", "bounds", "style"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]+$" },
+          "zone": {
+            "type": "string",
+            "enum": ["downtown", "commercial", "residential_high", "residential_low", "industrial", "civic", "mixed", "waterfront"]
+          },
+          "bounds": { "$ref": "#/$defs/bounds" },
+          "style": { "type": "string", "description": "An id from building_styles." },
+          "height_bias": { "type": "number", "minimum": 0.5, "maximum": 2, "description": "Optional multiplier on the style's height_range for this block." },
+          "population_target": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+
+    "landmarks": {
+      "type": "array",
+      "description": "Explicitly placed hero buildings (supertall towers, stadiums, monuments).",
+      "items": {
+        "type": "object",
+        "required": ["id", "position", "footprint", "height"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "position": { "$ref": "#/$defs/point" },
+          "footprint": { "$ref": "#/$defs/range", "description": "[width, depth] in metres." },
+          "height": { "type": "number", "minimum": 1 },
+          "style": { "type": "string", "description": "Optional building_styles id for its facade." },
+          "roof_type": { "type": "string", "enum": ["flat", "pitched", "setback", "domed", "sawtooth", "stepped"] },
+          "spire": { "type": "boolean" },
+          "color": { "$ref": "#/$defs/hexColor" }
+        }
+      }
+    },
+
+    "roads": {
+      "type": "array",
+      "description": "Road centrelines as polylines; the renderer extrudes a ribbon of the given width.",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "path", "width"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["highway", "boulevard", "avenue", "street", "cycle", "pedestrian"] },
+          "path": { "$ref": "#/$defs/polyline" },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "lanes": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "tree_lined": { "type": "boolean" }
+        }
+      }
+    },
+
+    "water_bodies": {
+      "type": "array",
+      "description": "Rivers/canals are `strip` (centreline path + width); lakes/marinas/ponds are `area` (polygon).",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "shape"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["river", "canal", "lake", "marina", "pond"] },
+          "shape": { "type": "string", "enum": ["strip", "area"] },
+          "path": { "$ref": "#/$defs/polyline" },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "polygon": { "$ref": "#/$defs/polygon" },
+          "depth": { "type": "number", "minimum": 0 },
+          "color": { "$ref": "#/$defs/hexColor" }
+        },
+        "allOf": [
+          { "if": { "properties": { "shape": { "const": "strip" } } }, "then": { "required": ["path", "width"] } },
+          { "if": { "properties": { "shape": { "const": "area" } } }, "then": { "required": ["polygon"] } }
+        ]
+      }
+    },
+
+    "green_areas": {
+      "type": "array",
+      "description": "Parks, grasslands and forests. The renderer draws a green surface and scatters trees by tree_density, sized by the height/canopy ranges.",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "bounds"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string", "enum": ["park", "grassland", "forest", "garden", "meadow", "plaza"] },
+          "bounds": { "$ref": "#/$defs/bounds" },
+          "tree_density": { "type": "number", "minimum": 0, "maximum": 1 },
+          "tree_species": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["broadleaf", "conifer", "palm", "shrub"] },
+            "minItems": 1
+          },
+          "tree_height_range": { "$ref": "#/$defs/range", "description": "[min,max] tree height in metres." },
+          "canopy_radius_range": { "$ref": "#/$defs/range", "description": "[min,max] canopy radius in metres." },
+          "color": { "$ref": "#/$defs/hexColor" }
+        }
+      }
+    },
+
+    "windmills": {
+      "type": "array",
+      "description": "Wind turbines, placed explicitly. Renderer builds a tapered tower + nacelle + rotor.",
+      "items": {
+        "type": "object",
+        "required": ["id", "position", "hub_height", "rotor_radius"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "position": { "$ref": "#/$defs/point" },
+          "hub_height": { "type": "number", "minimum": 5 },
+          "rotor_radius": { "type": "number", "minimum": 2 },
+          "blades": { "type": "integer", "minimum": 2, "maximum": 5 },
+          "tower_color": { "$ref": "#/$defs/hexColor" }
+        }
+      }
+    },
+
+    "environment": {
+      "type": "object",
+      "required": ["minimum_green_ratio"],
+      "additionalProperties": false,
+      "properties": {
+        "minimum_green_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "time_of_day": { "type": "string", "enum": ["day", "dawn", "dusk", "night"] },
+        "sky_color": { "$ref": "#/$defs/hexColor" },
+        "water_color": { "$ref": "#/$defs/hexColor" }
+      }
+    }
+  }
+}
