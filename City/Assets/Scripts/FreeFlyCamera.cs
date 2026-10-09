@@ -28,6 +28,20 @@ public class FreeFlyCamera : MonoBehaviour
 
     private void Update()
     {
+        bool isConsoleOpen = EnergyManager.Instance != null && EnergyManager.Instance.IsConsoleOpen;
+
+        if (isConsoleOpen)
+        {
+            if (mouseCaptured)
+            {
+                ReleaseMouse();
+            }
+
+            // In console mode, still allow movement with WASD so user can navigate while inspecting
+            HandleMovement();
+            return;
+        }
+
         HandleMouse();
         HandleMovement();
 
@@ -86,13 +100,13 @@ public class FreeFlyCamera : MonoBehaviour
         transform.position = newPos;
     }
 
-    private void CaptureMouse() {
+    public void CaptureMouse() {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         mouseCaptured = true;
     }
 
-    private void ReleaseMouse() {
+    public void ReleaseMouse() {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         mouseCaptured = false;

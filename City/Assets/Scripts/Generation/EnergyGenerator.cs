@@ -58,6 +58,8 @@ public sealed class EnergyGenerator
         rootObject.transform.SetParent(_parent, false);
         _energyRoot = rootObject.transform;
 
+        EnergyManager energyMgr = EnergyManager.EnsureExists();
+
         if (sectors == null || sectors.Count == 0)
         {
             Debug.LogWarning("[Energy] No sectors supplied.");
@@ -182,6 +184,8 @@ public sealed class EnergyGenerator
                 baseY);
         }
 
+        energyMgr.InitializeData(energyZones, climate, solarFarmCount, turbineCount);
+
         Debug.Log($"[Energy] Visuals synchronized with AI Planner: Generated {solarFarmCount} solar arrays ({panelAzimuth}° azimuth) and {turbineCount} wind turbines ({dominantWindDir}° wind heading, {renewableTarget:P0} target).");
     }
 
@@ -286,8 +290,11 @@ public sealed class EnergyGenerator
                 GameObject panel = CreateCube("SolarPanel",
                     new Vector3(x, panelY, z),
                     new Vector3(PanelWidth, 0.06f, PanelDepth),
-                    _panelMaterial, farm);
+                    _panelMaterial, farm, keepCollider: true);
                 panel.transform.rotation = tiltRot;
+
+                EnergySource src = panel.AddComponent<EnergySource>();
+                src.sourceType = EnergyType.Solar;
 
                 // Support leg
                 CreateCylinder("SolarSupport",
@@ -336,6 +343,15 @@ public sealed class EnergyGenerator
         Transform turbine = CreateGroup("WindTurbine");
 
         float towerH = TurbineHeight;
+
+        // Add capsule collider encompassing turbine so raycasting anywhere near it hits
+        CapsuleCollider col = turbine.gameObject.AddComponent<CapsuleCollider>();
+        col.center = new Vector3(x, baseY + towerH * 0.5f, z);
+        col.radius = TurbineBladeLength + 1.5f;
+        col.height = towerH + TurbineBladeLength * 2f;
+
+        EnergySource src = turbine.gameObject.AddComponent<EnergySource>();
+        src.sourceType = EnergyType.Wind;
 
         // Tower
         CreateCylinder("TurbineTower",
@@ -407,10 +423,13 @@ public sealed class EnergyGenerator
         {
             float ox = (i - 1) * 3f;
 
-            CreateCube("BatteryUnit",
+            GameObject unit = CreateCube("BatteryUnit",
                 new Vector3(x + ox, groundY, z),
                 new Vector3(2.4f, 1.4f, 1.6f),
-                _batteryMaterial, storage);
+                _batteryMaterial, storage, keepCollider: true);
+
+            EnergySource src = unit.AddComponent<EnergySource>();
+            src.sourceType = EnergyType.Storage;
 
             CreateCube("BatteryIndicator",
                 new Vector3(x + ox, groundY + 0.2f, z - 0.82f),
@@ -422,6 +441,14 @@ public sealed class EnergyGenerator
     private void CreateSubstation(float x, float z, float baseY)
     {
         Transform sub = CreateGroup("Substation");
+
+        // Add BoxCollider encompassing substation so clicking anywhere selects the grid substation
+        BoxCollider col = sub.gameObject.AddComponent<BoxCollider>();
+        col.center = new Vector3(x, baseY + 1.5f, z);
+        col.size = new Vector3(8f, 4f, 6f);
+
+        EnergySource src = sub.gameObject.AddComponent<EnergySource>();
+        src.sourceType = EnergyType.Grid;
 
         CreateCube("SubstationBase",
             new Vector3(x, baseY + 0.15f, z),
@@ -469,7 +496,7 @@ public sealed class EnergyGenerator
     }
 
     private static GameObject CreateCube(
-        string name, Vector3 position, Vector3 scale, Material mat, Transform parent)
+        string name, Vector3 position, Vector3 scale, Material mat, Transform parent, bool keepCollider = false)
     {
         GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
         obj.name = name;
@@ -477,7 +504,7 @@ public sealed class EnergyGenerator
         obj.transform.position   = position;
         obj.transform.localScale = scale;
         ApplyMaterial(obj, mat);
-        RemoveCollider(obj);
+        if (!keepCollider) RemoveCollider(obj);
         return obj;
     }
 
