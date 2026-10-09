@@ -107,6 +107,10 @@ public sealed class EnergyGenerator
         if (climate?.wind != null && climate.wind.dominant_direction > 0f)
             dominantWindDir = climate.wind.dominant_direction;
 
+        float windSpeed = 6f;
+        if (climate?.wind != null && climate.wind.average_speed > 0f)
+            windSpeed = climate.wind.average_speed;
+
         // Climate severity adjustment: higher wind speeds or capacity scale turbine count and spacing
         float targetSolarCount = Mathf.Clamp(solarCapacityMw * 0.8f, 30f, MaxPanelsPerFarm);
         float targetTurbineCount = Mathf.Clamp(windCapacityMw * 0.35f, 4f, MaxTurbinesPerFarm);
@@ -161,7 +165,7 @@ public sealed class EnergyGenerator
                 float startX = centerX + usableWidth * 0.05f;
                 float startZ = centerZ - usableDepth * 0.35f;
 
-                turbineCount += CreateWindFarm(startX, startZ, windW, windD, baseY, dominantWindDir, (int)targetTurbineCount);
+                turbineCount += CreateWindFarm(startX, startZ, windW, windD, baseY, dominantWindDir, (int)targetTurbineCount, windSpeed);
             }
 
             if (storageEnabled)
@@ -301,7 +305,8 @@ public sealed class EnergyGenerator
         float width,  float depth,
         float baseY,
         float windDirection = 270f,
-        int   maxTurbines = 16)
+        int   maxTurbines = 16,
+        float windSpeed = 6f)
     {
         int cap = Mathf.Clamp(maxTurbines, 2, MaxTurbinesPerFarm);
         int columns = Mathf.Clamp(Mathf.FloorToInt(width / 35f), 1, 4);
@@ -318,7 +323,7 @@ public sealed class EnergyGenerator
                 if ((row & 1) != 0)
                     x += (width / columns) * 0.25f;
 
-                CreateWindTurbine(x, z, baseY, windDirection);
+                CreateWindTurbine(x, z, baseY, windDirection, windSpeed);
                 count++;
             }
         }
@@ -326,7 +331,7 @@ public sealed class EnergyGenerator
         return count;
     }
 
-    private void CreateWindTurbine(float x, float z, float baseY, float windDirection = 270f)
+    private void CreateWindTurbine(float x, float z, float baseY, float windDirection = 270f, float windSpeed = 6f)
     {
         Transform turbine = CreateGroup("WindTurbine");
 
@@ -351,11 +356,20 @@ public sealed class EnergyGenerator
         nacelle.transform.rotation = yawRot;
 
         Vector3 hubPos = hubBase + forward * 0.95f + new Vector3(0f, 0.05f, 0f);
+
+        // Rotating rotor assembly (hub + 3 blades)
+        GameObject rotorObj = new GameObject("TurbineRotor");
+        rotorObj.transform.SetParent(turbine, false);
+        rotorObj.transform.position = hubPos;
+        rotorObj.transform.rotation = yawRot;
+
+        // Hub nose cone
         GameObject hubObj = CreateSphere("TurbineHub",
             hubPos,
             new Vector3(0.45f, 0.45f, 0.45f),
-            _bladeMaterial, turbine);
-        hubObj.transform.rotation = yawRot;
+            _bladeMaterial, rotorObj.transform);
+        hubObj.transform.localPosition = Vector3.zero;
+        hubObj.transform.localRotation = Quaternion.identity;
 
         // 3 Aerodynamic Blades
         for (int i = 0; i < 3; i++)
@@ -363,17 +377,23 @@ public sealed class EnergyGenerator
             float angle   = 90f + i * 120f;
             float radians = angle * Mathf.Deg2Rad;
             Vector3 localRadial = new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
-            Vector3 worldRadial = yawRot * localRadial;
-
-            Vector3 bladeCenter = hubPos + forward * 0.05f + worldRadial * (TurbineBladeLength * 0.5f);
+            Vector3 localBladeCenter = new Vector3(0f, 0f, 0.05f) + localRadial * (TurbineBladeLength * 0.5f);
 
             GameObject blade = CreateCube("TurbineBlade",
-                bladeCenter,
+                hubPos,
                 new Vector3(0.2f, TurbineBladeLength, 0.08f),
-                _bladeMaterial, turbine);
+                _bladeMaterial, rotorObj.transform);
 
-            blade.transform.rotation = yawRot * Quaternion.Euler(0f, 0f, angle - 90f);
+            blade.transform.localPosition = localBladeCenter;
+            blade.transform.localRotation = Quaternion.Euler(0f, 0f, angle - 90f);
         }
+
+        // Add rotor spinner animation
+        WindTurbineSpinner spinner = rotorObj.AddComponent<WindTurbineSpinner>();
+        float baseSpeed = Mathf.Clamp(windSpeed * 14f, 60f, 120f);
+        float variation = UnityEngine.Random.Range(-10f, 10f);
+        spinner.RotationSpeed = baseSpeed + variation;
+        spinner.RotationAxis = Vector3.forward;
     }
 
     // ── Storage & substations ─────────────────────────────────────────────────

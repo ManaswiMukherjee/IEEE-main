@@ -633,10 +633,21 @@ export function createCityScene(container, model) {
     tower.castShadow = true
     grp.add(tower)
 
+    // Stationary nacelle atop the tower
+    const nacelleGeo = new THREE.BoxGeometry(hub * 0.08, hub * 0.06, hub * 0.16)
+    const nacelle = new THREE.Mesh(nacelleGeo, towerMat)
+    nacelle.position.set(0, hub, 0)
+    nacelle.castShadow = true
+    grp.add(nacelle)
+
+    // Spinning rotor (hub + blades)
     const rotor = new THREE.Group()
-    rotor.position.set(0, hub, wm.rotor_radius * 0.08)
-    const nacelle = new THREE.Mesh(new THREE.BoxGeometry(hub * 0.08, hub * 0.06, hub * 0.14), towerMat)
-    rotor.add(nacelle)
+    rotor.position.set(0, hub, hub * 0.08 + wm.rotor_radius * 0.02)
+    const hubGeo = new THREE.SphereGeometry(hub * 0.035, 12, 12)
+    const hubMesh = new THREE.Mesh(hubGeo, towerMat)
+    hubMesh.castShadow = true
+    rotor.add(hubMesh)
+
     const blades = wm.blades || 3
     const bladeGeo = new THREE.BoxGeometry(wm.rotor_radius * 0.9, wm.rotor_radius * 0.06, 0.6)
     bladeGeo.translate(wm.rotor_radius * 0.45, 0, 0)
@@ -646,12 +657,14 @@ export function createCityScene(container, model) {
       blade.castShadow = true
       rotor.add(blade)
     }
-    rotor.userData.speed = 0.4 + rng() * 0.4
+    rotor.userData.speed = 1.2 + rng() * 0.8
     grp.add(rotor)
     rotors.push(rotor)
     root.add(grp)
     track(towerGeo)
     track(towerMat)
+    track(nacelleGeo)
+    track(hubGeo)
     track(bladeGeo)
   }
 
