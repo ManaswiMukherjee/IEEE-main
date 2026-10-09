@@ -1,18 +1,44 @@
-// EnergyGenerator.cs
-// Generates energy infrastructure visualisations:
-// solar farms, wind turbines, substations – from energy_zones data
-// and energy-typed sectors.
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
-public class EnergyGenerator
+public sealed class EnergyGenerator
 {
-    private readonly Transform        _parent;
-    private readonly CityMaterials    _mats;
+    private readonly Transform _parent;
+    private readonly CityMaterials _mats;
     private readonly TerrainGenerator _terrainGen;
 
-    public EnergyGenerator(Transform parent, CityMaterials mats, TerrainGenerator terrainGen = null)
+    private Transform _energyRoot;
+
+    private Material _panelMaterial;
+    private Material _panelFrameMaterial;
+    private Material _towerMaterial;
+    private Material _bladeMaterial;
+    private Material _batteryMaterial;
+    private Material _equipmentMaterial;
+
+    // ── Geometry constants ────────────────────────────────────────────────────
+    private const float PanelTilt   = 15f;
+    private const float PanelWidth  = 1.6f;
+    private const float PanelDepth  = 1.0f;
+    private const float PanelGap    = 0.25f;
+
+    private const float TurbineHeight      = 14f;
+    private const float TurbineBladeLength = 4.0f;
+
+    // ── RAM & Object limits: strictly bounded to prevent memory explosion ────
+    private const int MaxPanelsPerFarm   = 80;
+    private const int MaxTurbinesPerFarm = 16;
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public EnergyGenerator(
+        Transform parent,
+        CityMaterials mats,
+        TerrainGenerator terrainGen)
     {
         _parent     = parent;
         _mats       = mats;
@@ -20,48 +46,488 @@ public class EnergyGenerator
     }
 
     public void Generate(
-        EnergyZonesData  energyZones,
+        EnergyZonesData energyZones,
         List<SectorData> sectors,
-        CityData         city)
+        CityData city)
     {
-        Transform energyRoot = new GameObject("Energy").transform;
-        energyRoot.SetParent(_parent);
+        Debug.Log($"[Energy] Generate called. Sectors: {sectors?.Count ?? -1}");
+        CreateMaterials();
 
-        if (sectors == null) { Debug.Log("[Energy] Generated energy infrastructure."); return; }
+        GameObject rootObject = new GameObject("Energy");
+        rootObject.transform.SetParent(_parent, false);
+        _energyRoot = rootObject.transform;
 
-        int count = 0;
-        foreach (var sector in sectors)
+        if (sectors == null || sectors.Count == 0)
         {
-            if (sector.type != "energy") continue;
-            if (sector.geometry?.bounds == null || sector.geometry.bounds.Length < 4) continue;
-
-            float sx     = sector.geometry.bounds[0];
-            float sz     = sector.geometry.bounds[1];
-            float sWidth = sector.geometry.bounds[2];
-            float sDepth = sector.geometry.bounds[3];
-
-            // Create a solar panel array indicator
-            CreateSolarArray(sector.id, sx, sz, sWidth, sDepth, energyRoot);
-            count++;
+            Debug.LogWarning("[Energy] No sectors supplied.");
+            return;
         }
 
-        Debug.Log($"[Energy] Generated energy infrastructure ({count} energy sectors).");
+        bool solarEnabled = ReadBool(energyZones, "generation", "solar", "preferred", true);
+        bool windEnabled  = ReadBool(energyZones, "generation", "wind",  "preferred", false);
+        bool storageEnabled = ReadBool(energyZones, "storage", "enabled", "", true);
+
+        bool hasWindSource  = ContainsString(ReadValue(energyZones, "generation", "sources"), "wind");
+        bool hasSolarSource = ContainsString(ReadValue(energyZones, "generation", "sources"), "solar");
+
+        if (hasWindSource)  windEnabled  = true;
+        if (hasSolarSource) solarEnabled = true;
+
+        int solarFarmCount = 0;
+        int turbineCount   = 0;
+
+        foreach (SectorData sector in sectors)
+        {
+            if (sector == null) continue;
+
+            string type = Convert.ToString(ReadValue(sector, "type"));
+            if (!string.Equals(type, "energy", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!TryGetSectorBounds(sector,
+                    out float centerX, out float centerZ,
+                    out float width,   out float depth))
+            {
+                Debug.LogWarning("[Energy] Could not read bounds for an energy sector.");
+                continue;
+            }
+
+            if (width <= 1f || depth <= 1f) continue;
+
+            float usableWidth = Mathf.Max(1f, width  - 4f);
+            float usableDepth = Mathf.Max(1f, depth  - 4f);
+
+            float baseY = _terrainGen != null
+                ? _terrainGen.SampleHeight(centerX, centerZ)
+                : 0f;
+
+            // Divide sector neatly into zones:
+            // West side: Solar Farm
+            // East side: Wind Turbines
+            // South edge: Storage & Substation
+            if (solarEnabled)
+            {
+                float solarW = usableWidth * 0.5f;
+                float solarD = usableDepth * 0.7f;
+                float startX = centerX - usableWidth * 0.5f;
+                float startZ = centerZ - usableDepth * 0.35f;
+
+                CreateSolarFarm(startX, startZ, solarW, solarD, baseY);
+                solarFarmCount++;
+            }
+
+            if (windEnabled && usableWidth >= 20f && usableDepth >= 20f)
+            {
+                float windW  = usableWidth * 0.45f;
+                float windD  = usableDepth * 0.7f;
+                float startX = centerX + usableWidth * 0.05f;
+                float startZ = centerZ - usableDepth * 0.35f;
+
+                turbineCount += CreateWindFarm(startX, startZ, windW, windD, baseY);
+            }
+
+            if (storageEnabled)
+            {
+                CreateStorageFacility(
+                    centerX - usableWidth * 0.2f,
+                    centerZ - usableDepth * 0.42f,
+                    baseY);
+            }
+
+            CreateSubstation(
+                centerX + usableWidth * 0.2f,
+                centerZ - usableDepth * 0.42f,
+                baseY);
+        }
+
+        Debug.Log($"[Energy] Generated {solarFarmCount} solar arrays and {turbineCount} wind turbines.");
     }
 
-    private void CreateSolarArray(string id, float x, float z, float width, float depth, Transform parent)
-    {
-        float centerX = x + width * 0.5f;
-        float centerZ = z + depth * 0.5f;
-        float terrainH = _terrainGen != null ? _terrainGen.SampleHeight(centerX, centerZ) : 0f;
+    // ── Materials ─────────────────────────────────────────────────────────────
 
-        // Represent a solar farm as a flat panel-coloured slab with a slight tilt
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = $"Solar_{id}";
-        go.transform.SetParent(parent);
-        go.transform.position   = new Vector3(centerX, terrainH + 1.0f, centerZ);
-        go.transform.localScale = new Vector3(width, 0.1f, depth);
-        go.transform.eulerAngles = new Vector3(15f, 0f, 0f);  // south-facing tilt
-        go.GetComponent<Renderer>().material = _mats.Solar;
-        UnityEngine.Object.Destroy(go.GetComponent<BoxCollider>());
+    private void CreateMaterials()
+    {
+        _panelMaterial = MakeMaterial("Energy_NeonBlue_Panels",
+            new Color(0.015f, 0.055f, 0.22f),
+            new Color(0.0f,   0.25f,  1.1f));
+        _panelMaterial.enableInstancing = true;
+
+        _panelFrameMaterial = MakeMaterial("Energy_Cyan_Frames",
+            new Color(0.0f, 0.48f, 0.9f),
+            new Color(0.0f, 0.85f, 2.0f));
+        _panelFrameMaterial.enableInstancing = true;
+
+        _towerMaterial = MakeMaterial("Energy_Blue_Turbines",
+            new Color(0.85f, 0.88f, 0.92f),
+            Color.black);
+        _towerMaterial.enableInstancing = true;
+
+        _bladeMaterial = MakeMaterial("Energy_Cyan_Blades",
+            new Color(0.9f, 0.95f, 1.0f),
+            new Color(0.0f, 0.5f, 1.5f));
+        _bladeMaterial.enableInstancing = true;
+
+        _batteryMaterial = MakeMaterial("Energy_Blue_Batteries",
+            new Color(0.015f, 0.08f, 0.35f),
+            new Color(0.0f,   0.4f,  1.5f));
+        _batteryMaterial.enableInstancing = true;
+
+        _equipmentMaterial = MakeMaterial("Energy_Blue_Substations",
+            new Color(0.25f, 0.3f, 0.35f),
+            new Color(0.0f,  0.45f, 1.6f));
+        _equipmentMaterial.enableInstancing = true;
+    }
+
+    private static Material MakeMaterial(string name, Color baseColor, Color emissionColor)
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+        Material mat  = new Material(shader) { name = name };
+
+        if (mat.HasProperty("_BaseColor"))  mat.SetColor("_BaseColor", baseColor);
+        if (mat.HasProperty("_Color"))      mat.SetColor("_Color",     baseColor);
+        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", 0.5f);
+
+        if (emissionColor != Color.black && mat.HasProperty("_EmissionColor"))
+        {
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", emissionColor);
+        }
+
+        return mat;
+    }
+
+    // ── Solar farm ────────────────────────────────────────────────────────────
+
+    private void CreateSolarFarm(
+        float startX, float startZ,
+        float width,  float depth,
+        float baseY)
+    {
+        Transform farm = CreateGroup("SolarFarm");
+
+        float rowSpacing = PanelDepth + PanelGap;
+        float colSpacing = PanelWidth + PanelGap;
+
+        int columns = Mathf.Max(1, Mathf.FloorToInt((width - PanelGap) / colSpacing));
+        int rows    = Mathf.Max(1, Mathf.FloorToInt((depth - PanelGap) / rowSpacing));
+
+        // Strict cap to keep GameObject count low and avoid RAM spike
+        int totalPanels = columns * rows;
+        if (totalPanels > MaxPanelsPerFarm)
+        {
+            float ratio = Mathf.Sqrt((float)MaxPanelsPerFarm / totalPanels);
+            columns = Mathf.Max(1, Mathf.FloorToInt(columns * ratio));
+            rows    = Mathf.Max(1, Mathf.FloorToInt(rows    * ratio));
+        }
+
+        float totalW  = columns * colSpacing - PanelGap;
+        float totalD  = rows    * rowSpacing - PanelGap;
+        float offsetX = (width  - totalW) * 0.5f;
+        float offsetZ = (depth  - totalD) * 0.5f;
+
+        float tiltRad = PanelTilt * Mathf.Deg2Rad;
+        Quaternion tiltRot = Quaternion.Euler(-PanelTilt, 0f, 0f);
+
+        for (int row = 0; row < rows; row++)
+        {
+            for (int col = 0; col < columns; col++)
+            {
+                float x = startX + offsetX + col * colSpacing + PanelWidth * 0.5f;
+                float z = startZ + offsetZ + row * rowSpacing + PanelDepth * 0.5f;
+                float panelY = baseY + 0.8f + PanelDepth * 0.5f * Mathf.Sin(tiltRad);
+
+                // Panel body
+                GameObject panel = CreateCube("SolarPanel",
+                    new Vector3(x, panelY, z),
+                    new Vector3(PanelWidth, 0.06f, PanelDepth),
+                    _panelMaterial, farm);
+                panel.transform.rotation = tiltRot;
+
+                // Support leg
+                CreateCylinder("SolarSupport",
+                    new Vector3(x, baseY + 0.35f, z),
+                    new Vector3(0.06f, 0.35f, 0.06f),
+                    _panelFrameMaterial, farm);
+            }
+        }
+    }
+
+    // ── Wind farm ─────────────────────────────────────────────────────────────
+
+    private int CreateWindFarm(
+        float startX, float startZ,
+        float width,  float depth,
+        float baseY)
+    {
+        // Spacing strictly enforced to cap turbines
+        int columns = Mathf.Clamp(Mathf.FloorToInt(width / 35f), 1, 4);
+        int rows    = Mathf.Clamp(Mathf.FloorToInt(depth / 35f), 1, 4);
+
+        int count = 0;
+        for (int row = 0; row < rows && count < MaxTurbinesPerFarm; row++)
+        {
+            for (int col = 0; col < columns && count < MaxTurbinesPerFarm; col++)
+            {
+                float x = startX + (col + 0.5f) * (width / columns);
+                float z = startZ + (row + 0.5f) * (depth / rows);
+
+                if ((row & 1) != 0)
+                    x += (width / columns) * 0.25f;
+
+                CreateWindTurbine(x, z, baseY);
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private void CreateWindTurbine(float x, float z, float baseY)
+    {
+        Transform turbine = CreateGroup("WindTurbine");
+
+        float towerH = TurbineHeight;
+
+        // Tower
+        CreateCylinder("TurbineTower",
+            new Vector3(x, baseY + towerH * 0.5f, z),
+            new Vector3(0.3f, towerH * 0.5f, 0.3f),
+            _towerMaterial, turbine);
+
+        // Nacelle & Hub
+        Vector3 hub = new Vector3(x, baseY + towerH, z);
+        CreateCube("TurbineNacelle",
+            hub + new Vector3(0f, 0.05f, 0.3f),
+            new Vector3(0.6f, 0.6f, 1.2f),
+            _equipmentMaterial, turbine);
+
+        CreateSphere("TurbineHub",
+            hub + new Vector3(0f, 0.05f, 0.9f),
+            new Vector3(0.45f, 0.45f, 0.45f),
+            _bladeMaterial, turbine);
+
+        // 3 Blades
+        for (int i = 0; i < 3; i++)
+        {
+            float angle   = 90f + i * 120f;
+            float radians = angle * Mathf.Deg2Rad;
+            Vector3 dir   = new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
+
+            Vector3 bladeCenter = hub + new Vector3(0f, 0.05f, 0.95f)
+                + dir * (TurbineBladeLength * 0.5f);
+
+            GameObject blade = CreateCube("TurbineBlade",
+                bladeCenter,
+                new Vector3(0.2f, TurbineBladeLength, 0.08f),
+                _bladeMaterial, turbine);
+            blade.transform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+        }
+    }
+
+    // ── Storage & substations ─────────────────────────────────────────────────
+
+    private void CreateStorageFacility(float x, float z, float baseY)
+    {
+        Transform storage = CreateGroup("EnergyStorage");
+        float groundY = baseY + 0.7f;
+
+        for (int i = 0; i < 3; i++)
+        {
+            float ox = (i - 1) * 3f;
+
+            CreateCube("BatteryUnit",
+                new Vector3(x + ox, groundY, z),
+                new Vector3(2.4f, 1.4f, 1.6f),
+                _batteryMaterial, storage);
+
+            CreateCube("BatteryIndicator",
+                new Vector3(x + ox, groundY + 0.2f, z - 0.82f),
+                new Vector3(1.2f, 0.18f, 0.05f),
+                _panelFrameMaterial, storage);
+        }
+    }
+
+    private void CreateSubstation(float x, float z, float baseY)
+    {
+        Transform sub = CreateGroup("Substation");
+
+        CreateCube("SubstationBase",
+            new Vector3(x, baseY + 0.15f, z),
+            new Vector3(6f, 0.3f, 4f),
+            _equipmentMaterial, sub);
+
+        for (int i = 0; i < 3; i++)
+        {
+            float ox = (i - 1) * 1.8f;
+
+            CreateCube("Transformer",
+                new Vector3(x + ox, baseY + 0.9f, z),
+                new Vector3(1.1f, 1.2f, 1.2f),
+                _equipmentMaterial, sub);
+
+            CreateCylinder("TransformerInsulator",
+                new Vector3(x + ox, baseY + 1.65f, z),
+                new Vector3(0.1f, 0.3f, 0.1f),
+                _panelFrameMaterial, sub);
+        }
+
+        // Gantry
+        CreateCube("SubstationGantry",
+            new Vector3(x, baseY + 2.1f, z + 1.2f),
+            new Vector3(5f, 0.12f, 0.12f),
+            _panelFrameMaterial, sub);
+
+        for (int i = 0; i < 3; i++)
+        {
+            float ox = (i - 1) * 2.2f;
+            CreateCube("GantryPost",
+                new Vector3(x + ox, baseY + 1.1f, z + 1.2f),
+                new Vector3(0.1f, 1f, 0.1f),
+                _panelFrameMaterial, sub);
+        }
+    }
+
+    // ── Primitive helpers ─────────────────────────────────────────────────────
+
+    private Transform CreateGroup(string name)
+    {
+        GameObject g = new GameObject(name);
+        g.transform.SetParent(_energyRoot, false);
+        return g.transform;
+    }
+
+    private static GameObject CreateCube(
+        string name, Vector3 position, Vector3 scale, Material mat, Transform parent)
+    {
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        obj.name = name;
+        obj.transform.SetParent(parent, false);
+        obj.transform.position   = position;
+        obj.transform.localScale = scale;
+        ApplyMaterial(obj, mat);
+        RemoveCollider(obj);
+        return obj;
+    }
+
+    private static GameObject CreateCylinder(
+        string name, Vector3 position, Vector3 scale, Material mat, Transform parent)
+    {
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        obj.name = name;
+        obj.transform.SetParent(parent, false);
+        obj.transform.position   = position;
+        obj.transform.localScale = scale;
+        ApplyMaterial(obj, mat);
+        RemoveCollider(obj);
+        return obj;
+    }
+
+    private static GameObject CreateSphere(
+        string name, Vector3 position, Vector3 scale, Material mat, Transform parent)
+    {
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        obj.name = name;
+        obj.transform.SetParent(parent, false);
+        obj.transform.position   = position;
+        obj.transform.localScale = scale;
+        ApplyMaterial(obj, mat);
+        RemoveCollider(obj);
+        return obj;
+    }
+
+    private static void ApplyMaterial(GameObject obj, Material mat)
+    {
+        Renderer r = obj.GetComponent<Renderer>();
+        if (r != null)
+        {
+            r.sharedMaterial    = mat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows    = false;
+        }
+    }
+
+    private static void RemoveCollider(GameObject obj)
+    {
+        Collider c = obj.GetComponent<Collider>();
+        if (c != null) UnityEngine.Object.Destroy(c);
+    }
+
+    // ── Data access helpers ───────────────────────────────────────────────────
+
+    private static object ReadValue(object source, params string[] path)
+    {
+        object cur = source;
+        foreach (string m in path)
+        {
+            if (cur == null) return null;
+            cur = ReadMember(cur, m);
+        }
+        return cur;
+    }
+
+    private static object ReadMember(object source, string name)
+    {
+        if (source == null || string.IsNullOrEmpty(name)) return null;
+
+        if (source is IDictionary dict)
+        {
+            foreach (DictionaryEntry e in dict)
+                if (string.Equals(Convert.ToString(e.Key), name, StringComparison.OrdinalIgnoreCase))
+                    return e.Value;
+        }
+
+        Type t = source.GetType();
+
+        PropertyInfo prop = t.GetProperty(name,
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        if (prop != null) return prop.GetValue(source);
+
+        FieldInfo field = t.GetField(name,
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        if (field != null) return field.GetValue(source);
+
+        return null;
+    }
+
+    private static bool ReadBool(
+        object source, string first, string second, string third, bool defaultValue)
+    {
+        object v = ReadValue(source, first, second, third);
+        if (v == null) return defaultValue;
+        try { return Convert.ToBoolean(v); }
+        catch { return defaultValue; }
+    }
+
+    private static bool ContainsString(object source, string expected)
+    {
+        if (source is IEnumerable e && !(source is string))
+            foreach (object item in e)
+                if (string.Equals(Convert.ToString(item), expected, StringComparison.OrdinalIgnoreCase))
+                    return true;
+        return false;
+    }
+
+    private static bool TryGetSectorBounds(
+        SectorData sector,
+        out float centerX, out float centerZ,
+        out float width,   out float depth)
+    {
+        centerX = centerZ = width = depth = 0f;
+
+        if (sector?.geometry == null) return false;
+
+        float[] b = sector.geometry.bounds;
+        if (b == null || b.Length < 4)
+        {
+            Debug.LogWarning($"[Energy] Sector '{sector.id}' has invalid bounds.");
+            return false;
+        }
+
+        centerX = b[0];
+        centerZ = b[1];
+        width   = Mathf.Abs(b[2]);
+        depth   = Mathf.Abs(b[3]);
+
+        return width > 1f && depth > 1f;
     }
 }

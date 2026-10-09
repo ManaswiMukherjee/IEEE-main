@@ -76,7 +76,14 @@ public class FreeFlyCamera : MonoBehaviour
             direction.Normalize();
 
         float speed = keyboard.rightShiftKey.isPressed ? fastSpeed : moveSpeed;
-        transform.position += direction * speed * Time.deltaTime;
+        Vector3 newPos = transform.position + direction * speed * Time.deltaTime;
+
+        // Floor collision: camera cannot penetrate below the floor
+        const float minHeight = 1.0f;
+        if (newPos.y < minHeight)
+            newPos.y = minHeight;
+
+        transform.position = newPos;
     }
 
     private void CaptureMouse() {

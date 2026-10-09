@@ -602,7 +602,7 @@ public class BlocksData
 public class BlockGenerationData
 {
     [JsonProperty("method")]                    public string method                    = "road_bounded";
-    [JsonProperty("respect_sector_boundaries")] public bool   respect_sector_boundaries = true;
+    [JsonProperty("respect_sector_boundaries")] public bool   respect_boundaries = true;
     [JsonProperty("respect_road_hierarchy")]    public bool   respect_road_hierarchy    = true;
     [JsonProperty("arterial_block_boundary")]   public bool   arterial_block_boundary   = true;
     [JsonProperty("collector_block_boundary")]  public bool   collector_block_boundary  = true;

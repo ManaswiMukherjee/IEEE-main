@@ -105,7 +105,7 @@ public class CityGenerator : MonoBehaviour
         {
             _terrainGen.Generate(_plan.terrain, _plan.city);
             _sectorGen.Generate(_plan.sectors, _plan.city);
-            _roadGen.Generate(_plan.road_graph, _plan.city);
+            _roadGen.GenerateWithSectors(_plan.road_graph, _plan.sectors, _plan.city);
             _blockGen.Generate(_plan.sectors, _plan.road_graph, _plan.blocks, _plan.city, seed);
             _buildingGen.Generate(
                 _blockGen.GeneratedBlocks, _plan.buildings,
@@ -329,27 +329,30 @@ public class CityMaterials
 
     public CityMaterials()
     {
-        Terrain     = Make(new Color(0.22f, 0.38f, 0.22f));
-        Road        = Make(new Color(0.12f, 0.12f, 0.12f));
-        Sidewalk    = Make(new Color(0.75f, 0.72f, 0.65f));
-        Water       = Make(new Color(0.05f, 0.30f, 0.60f));
-        Grass       = Make(new Color(0.20f, 0.50f, 0.20f));
-        Building    = Make(new Color(0.68f, 0.68f, 0.72f));
-        Roof        = Make(new Color(0.50f, 0.42f, 0.38f));
-        Solar       = Make(new Color(0.08f, 0.15f, 0.35f));
-        Industrial  = Make(new Color(0.45f, 0.40f, 0.33f));
-        Vegetation  = Make(new Color(0.15f, 0.45f, 0.15f));
-        Commercial  = Make(new Color(0.38f, 0.46f, 0.60f));
-        Energy      = Make(new Color(0.10f, 0.20f, 0.40f));
-        Transport   = Make(new Color(0.30f, 0.30f, 0.35f));
+        Terrain     = Make(new Color(0.18f, 0.32f, 0.18f), 0.1f);
+        Road        = Make(new Color(0.15f, 0.16f, 0.18f), 0.2f);
+        Sidewalk    = Make(new Color(0.72f, 0.70f, 0.65f), 0.1f);
+        Water       = Make(new Color(0.08f, 0.38f, 0.65f), 0.85f);
+        Grass       = Make(new Color(0.22f, 0.48f, 0.22f), 0.1f);
+        Building    = Make(new Color(0.75f, 0.75f, 0.78f), 0.4f);
+        Roof        = Make(new Color(0.38f, 0.36f, 0.35f), 0.2f);
+        Solar       = Make(new Color(0.04f, 0.12f, 0.32f), 0.8f);
+        Industrial  = Make(new Color(0.42f, 0.39f, 0.36f), 0.25f);
+        Vegetation  = Make(new Color(0.12f, 0.42f, 0.14f), 0.15f);
+        Commercial  = Make(new Color(0.28f, 0.45f, 0.62f), 0.6f);
+        Energy      = Make(new Color(0.08f, 0.24f, 0.45f), 0.5f);
+        Transport   = Make(new Color(0.32f, 0.34f, 0.38f), 0.3f);
     }
 
-    private static Material Make(Color color)
+    private static Material Make(Color color, float smoothness = 0.3f)
     {
         Shader sh = Shader.Find("Universal Render Pipeline/Lit")
                  ?? Shader.Find("Standard");
         var mat = new Material(sh);
-        mat.color = color;
+        mat.enableInstancing = true;
+        if (mat.HasProperty("_BaseColor"))  mat.SetColor("_BaseColor", color);
+        if (mat.HasProperty("_Color"))      mat.SetColor("_Color", color);
+        if (mat.HasProperty("_Smoothness")) mat.SetFloat("_Smoothness", smoothness);
         return mat;
     }
 
