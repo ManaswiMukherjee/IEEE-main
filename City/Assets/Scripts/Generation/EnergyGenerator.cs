@@ -46,9 +46,10 @@ public sealed class EnergyGenerator
     }
 
     public void Generate(
-        EnergyZonesData energyZones,
+        EnergyZonesData  energyZones,
         List<SectorData> sectors,
-        CityData city)
+        CityData         city,
+        ClimateData      climate = null)
     {
         Debug.Log($"[Energy] Generate called. Sectors: {sectors?.Count ?? -1}");
         CreateMaterials();
@@ -63,8 +64,9 @@ public sealed class EnergyGenerator
             return;
         }
 
-        bool solarEnabled = ReadBool(energyZones, "generation", "solar", "preferred", true);
-        bool windEnabled  = ReadBool(energyZones, "generation", "wind",  "preferred", false);
+        // 1. Read generation sources and renewable targets from AI Planner
+        bool solarEnabled   = ReadBool(energyZones, "generation", "solar", "preferred", true);
+        bool windEnabled    = ReadBool(energyZones, "generation", "wind",  "preferred", false);
         bool storageEnabled = ReadBool(energyZones, "storage", "enabled", "", true);
 
         bool hasWindSource  = ContainsString(ReadValue(energyZones, "generation", "sources"), "wind");
@@ -72,6 +74,42 @@ public sealed class EnergyGenerator
 
         if (hasWindSource)  windEnabled  = true;
         if (hasSolarSource) solarEnabled = true;
+
+        float renewableTarget = 0.85f;
+        object targetVal = ReadValue(energyZones, "generation", "renewable_target");
+        if (targetVal != null)
+        {
+            try { renewableTarget = Convert.ToSingle(targetVal); } catch { }
+        }
+
+        float solarCapacityMw = 100f;
+        object solCap = ReadValue(energyZones, "generation", "solar", "minimum_capacity_mw");
+        if (solCap != null)
+        {
+            try { solarCapacityMw = Convert.ToSingle(solCap); } catch { }
+        }
+
+        float windCapacityMw = 30f;
+        object windCap = ReadValue(energyZones, "generation", "wind", "minimum_capacity_mw");
+        if (windCap != null)
+        {
+            try { windCapacityMw = Convert.ToSingle(windCap); } catch { }
+        }
+
+        // 2. Read Climate conditions from AI Planner
+        // Solar orientation: default south (180 deg) in Northern Hemisphere
+        float panelAzimuth = 180f;
+        if (climate?.solar != null && climate.solar.preferred_panel_orientation > 0f)
+            panelAzimuth = climate.solar.preferred_panel_orientation;
+
+        // Wind turbine alignment: face into dominant wind direction
+        float dominantWindDir = 270f;
+        if (climate?.wind != null && climate.wind.dominant_direction > 0f)
+            dominantWindDir = climate.wind.dominant_direction;
+
+        // Climate severity adjustment: higher wind speeds or capacity scale turbine count and spacing
+        float targetSolarCount = Mathf.Clamp(solarCapacityMw * 0.8f, 30f, MaxPanelsPerFarm);
+        float targetTurbineCount = Mathf.Clamp(windCapacityMw * 0.35f, 4f, MaxTurbinesPerFarm);
 
         int solarFarmCount = 0;
         int turbineCount   = 0;
@@ -101,29 +139,29 @@ public sealed class EnergyGenerator
                 ? _terrainGen.SampleHeight(centerX, centerZ)
                 : 0f;
 
-            // Divide sector neatly into zones:
-            // West side: Solar Farm
-            // East side: Wind Turbines
-            // South edge: Storage & Substation
+            // Divide sector logically according to renewable planner:
+            // West/South zone: High-yield ground mounted solar arrays oriented towards optimal solar angle
+            // East/High-elevation zone: Wind park oriented towards dominant wind corridor
+            // Central perimeter: Grid battery storage & high-voltage transmission substation
             if (solarEnabled)
             {
-                float solarW = usableWidth * 0.5f;
-                float solarD = usableDepth * 0.7f;
+                float solarW = usableWidth * 0.52f;
+                float solarD = usableDepth * 0.75f;
                 float startX = centerX - usableWidth * 0.5f;
                 float startZ = centerZ - usableDepth * 0.35f;
 
-                CreateSolarFarm(startX, startZ, solarW, solarD, baseY);
+                CreateSolarFarm(startX, startZ, solarW, solarD, baseY, panelAzimuth, (int)targetSolarCount);
                 solarFarmCount++;
             }
 
             if (windEnabled && usableWidth >= 20f && usableDepth >= 20f)
             {
-                float windW  = usableWidth * 0.45f;
-                float windD  = usableDepth * 0.7f;
+                float windW  = usableWidth * 0.44f;
+                float windD  = usableDepth * 0.75f;
                 float startX = centerX + usableWidth * 0.05f;
                 float startZ = centerZ - usableDepth * 0.35f;
 
-                turbineCount += CreateWindFarm(startX, startZ, windW, windD, baseY);
+                turbineCount += CreateWindFarm(startX, startZ, windW, windD, baseY, dominantWindDir, (int)targetTurbineCount);
             }
 
             if (storageEnabled)
@@ -140,7 +178,7 @@ public sealed class EnergyGenerator
                 baseY);
         }
 
-        Debug.Log($"[Energy] Generated {solarFarmCount} solar arrays and {turbineCount} wind turbines.");
+        Debug.Log($"[Energy] Visuals synchronized with AI Planner: Generated {solarFarmCount} solar arrays ({panelAzimuth}° azimuth) and {turbineCount} wind turbines ({dominantWindDir}° wind heading, {renewableTarget:P0} target).");
     }
 
     // ── Materials ─────────────────────────────────────────────────────────────
@@ -201,7 +239,9 @@ public sealed class EnergyGenerator
     private void CreateSolarFarm(
         float startX, float startZ,
         float width,  float depth,
-        float baseY)
+        float baseY,
+        float panelAzimuth = 180f,
+        int   maxPanels = 80)
     {
         Transform farm = CreateGroup("SolarFarm");
 
@@ -211,11 +251,11 @@ public sealed class EnergyGenerator
         int columns = Mathf.Max(1, Mathf.FloorToInt((width - PanelGap) / colSpacing));
         int rows    = Mathf.Max(1, Mathf.FloorToInt((depth - PanelGap) / rowSpacing));
 
-        // Strict cap to keep GameObject count low and avoid RAM spike
+        int cap = Mathf.Clamp(maxPanels, 20, MaxPanelsPerFarm);
         int totalPanels = columns * rows;
-        if (totalPanels > MaxPanelsPerFarm)
+        if (totalPanels > cap)
         {
-            float ratio = Mathf.Sqrt((float)MaxPanelsPerFarm / totalPanels);
+            float ratio = Mathf.Sqrt((float)cap / totalPanels);
             columns = Mathf.Max(1, Mathf.FloorToInt(columns * ratio));
             rows    = Mathf.Max(1, Mathf.FloorToInt(rows    * ratio));
         }
@@ -226,7 +266,9 @@ public sealed class EnergyGenerator
         float offsetZ = (depth  - totalD) * 0.5f;
 
         float tiltRad = PanelTilt * Mathf.Deg2Rad;
-        Quaternion tiltRot = Quaternion.Euler(-PanelTilt, 0f, 0f);
+        // Rotate solar panel according to preferred panel azimuth (from AI climate planner)
+        // 180 deg = faces South. Euler angles: pitch by -PanelTilt, then yaw by (panelAzimuth - 180)
+        Quaternion tiltRot = Quaternion.Euler(-PanelTilt, panelAzimuth - 180f, 0f);
 
         for (int row = 0; row < rows; row++)
         {
@@ -257,16 +299,18 @@ public sealed class EnergyGenerator
     private int CreateWindFarm(
         float startX, float startZ,
         float width,  float depth,
-        float baseY)
+        float baseY,
+        float windDirection = 270f,
+        int   maxTurbines = 16)
     {
-        // Spacing strictly enforced to cap turbines
+        int cap = Mathf.Clamp(maxTurbines, 2, MaxTurbinesPerFarm);
         int columns = Mathf.Clamp(Mathf.FloorToInt(width / 35f), 1, 4);
         int rows    = Mathf.Clamp(Mathf.FloorToInt(depth / 35f), 1, 4);
 
         int count = 0;
-        for (int row = 0; row < rows && count < MaxTurbinesPerFarm; row++)
+        for (int row = 0; row < rows && count < cap; row++)
         {
-            for (int col = 0; col < columns && count < MaxTurbinesPerFarm; col++)
+            for (int col = 0; col < columns && count < cap; col++)
             {
                 float x = startX + (col + 0.5f) * (width / columns);
                 float z = startZ + (row + 0.5f) * (depth / rows);
@@ -274,7 +318,7 @@ public sealed class EnergyGenerator
                 if ((row & 1) != 0)
                     x += (width / columns) * 0.25f;
 
-                CreateWindTurbine(x, z, baseY);
+                CreateWindTurbine(x, z, baseY, windDirection);
                 count++;
             }
         }
@@ -282,7 +326,7 @@ public sealed class EnergyGenerator
         return count;
     }
 
-    private void CreateWindTurbine(float x, float z, float baseY)
+    private void CreateWindTurbine(float x, float z, float baseY, float windDirection = 270f)
     {
         Transform turbine = CreateGroup("WindTurbine");
 
@@ -291,36 +335,44 @@ public sealed class EnergyGenerator
         // Tower
         CreateCylinder("TurbineTower",
             new Vector3(x, baseY + towerH * 0.5f, z),
-            new Vector3(0.3f, towerH * 0.5f, 0.3f),
+            new Vector3(0.35f, towerH * 0.5f, 0.35f),
             _towerMaterial, turbine);
 
-        // Nacelle & Hub
-        Vector3 hub = new Vector3(x, baseY + towerH, z);
-        CreateCube("TurbineNacelle",
-            hub + new Vector3(0f, 0.05f, 0.3f),
-            new Vector3(0.6f, 0.6f, 1.2f),
-            _equipmentMaterial, turbine);
+        // Nacelle & Hub (aligned directly into dominant wind direction)
+        Quaternion yawRot = Quaternion.Euler(0f, windDirection, 0f);
+        Vector3 forward = yawRot * Vector3.forward;
 
-        CreateSphere("TurbineHub",
-            hub + new Vector3(0f, 0.05f, 0.9f),
+        Vector3 hubBase = new Vector3(x, baseY + towerH, z);
+        Vector3 nacellePos = hubBase + forward * 0.3f + new Vector3(0f, 0.05f, 0f);
+        GameObject nacelle = CreateCube("TurbineNacelle",
+            nacellePos,
+            new Vector3(0.6f, 0.6f, 1.3f),
+            _equipmentMaterial, turbine);
+        nacelle.transform.rotation = yawRot;
+
+        Vector3 hubPos = hubBase + forward * 0.95f + new Vector3(0f, 0.05f, 0f);
+        GameObject hubObj = CreateSphere("TurbineHub",
+            hubPos,
             new Vector3(0.45f, 0.45f, 0.45f),
             _bladeMaterial, turbine);
+        hubObj.transform.rotation = yawRot;
 
-        // 3 Blades
+        // 3 Aerodynamic Blades
         for (int i = 0; i < 3; i++)
         {
             float angle   = 90f + i * 120f;
             float radians = angle * Mathf.Deg2Rad;
-            Vector3 dir   = new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
+            Vector3 localRadial = new Vector3(Mathf.Cos(radians), Mathf.Sin(radians), 0f);
+            Vector3 worldRadial = yawRot * localRadial;
 
-            Vector3 bladeCenter = hub + new Vector3(0f, 0.05f, 0.95f)
-                + dir * (TurbineBladeLength * 0.5f);
+            Vector3 bladeCenter = hubPos + forward * 0.05f + worldRadial * (TurbineBladeLength * 0.5f);
 
             GameObject blade = CreateCube("TurbineBlade",
                 bladeCenter,
                 new Vector3(0.2f, TurbineBladeLength, 0.08f),
                 _bladeMaterial, turbine);
-            blade.transform.rotation = Quaternion.Euler(0f, 0f, angle - 90f);
+
+            blade.transform.rotation = yawRot * Quaternion.Euler(0f, 0f, angle - 90f);
         }
     }
 

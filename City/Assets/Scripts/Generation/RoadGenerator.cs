@@ -258,13 +258,7 @@ public class RoadGenerator
 
         string routing = edge.geometry?.routing ?? "straight";
 
-        if (routing == "orthogonal")
-        {
-            Vector2 corner = new Vector2(b.x, a.y);
-            RenderCrossSection(edge, a, corner, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
-            RenderCrossSection(edge, corner, b, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
-        }
-        else if (routing == "custom" && edge.geometry?.waypoints != null && edge.geometry.waypoints.Count >= 2)
+        if (routing == "custom" && edge.geometry?.waypoints != null && edge.geometry.waypoints.Count >= 2)
         {
             var wp = edge.geometry.waypoints;
             for (int i = 0; i < wp.Count - 1; i++)
@@ -274,10 +268,45 @@ public class RoadGenerator
                 RenderCrossSection(edge, pa, pb, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
             }
         }
+        else if (routing == "orthogonal" || (routing != "straight_force" && ShouldRouteOrthogonally(edge.type, a, b)))
+        {
+            // Plan-logical urban routing: vehicles follow the urban street grid without slicing diagonally through neighborhoods
+            Vector2 corner = new Vector2(b.x, a.y);
+            RenderCrossSection(edge, a, corner, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
+            RenderCrossSection(edge, corner, b, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
+            RenderCornerPad(corner, roadW);
+        }
         else
         {
             RenderCrossSection(edge, a, b, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
         }
+    }
+
+    private static bool ShouldRouteOrthogonally(string edgeType, Vector2 a, Vector2 b)
+    {
+        float dx = Mathf.Abs(a.x - b.x);
+        float dz = Mathf.Abs(a.y - b.y);
+
+        // If road is essentially straight along X or Z axis, no elbow needed
+        if (dx < 40f || dz < 40f) return false;
+
+        // Long-distance inter-district connections (arterials, collectors, local utility links)
+        // look believable when adhering to orthogonal grid planning rather than arbitrary diagonals
+        return edgeType is "arterial" or "collector" or "local";
+    }
+
+    private void RenderCornerPad(Vector2 corner, float roadWidth)
+    {
+        float padSize = roadWidth + (SidewalkWidth + CurbWidth) * 2f;
+        float y       = GetY(corner.x, corner.y) + IntersectY;
+        float h       = padSize * 0.5f;
+
+        Vector3 v0 = new Vector3(corner.x - h, y, corner.y - h);
+        Vector3 v1 = new Vector3(corner.x - h, y, corner.y + h);
+        Vector3 v2 = new Vector3(corner.x + h, y, corner.y + h);
+        Vector3 v3 = new Vector3(corner.x + h, y, corner.y - h);
+
+        _bIntersection.AddQuad(v0, v1, v2, v3, Vector2.zero, Vector2.up, Vector2.one, Vector2.right);
     }
 
     private void RenderCrossSection(

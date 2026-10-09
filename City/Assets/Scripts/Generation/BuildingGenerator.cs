@@ -57,14 +57,20 @@ public class BuildingGenerator
 
         BuildingSpacingData globalSpacing = buildingsData?.spacing ?? new BuildingSpacingData();
 
-        // High-performance material batchers
-        MeshBatcher bCommercial = new MeshBatcher();
-        MeshBatcher bIndustrial = new MeshBatcher();
-        MeshBatcher bDefault    = new MeshBatcher();
-        MeshBatcher bPenthouse  = new MeshBatcher();
+        // High-performance material batchers per district identity
+        MeshBatcher bResidential      = new MeshBatcher();
+        MeshBatcher bResidentialTower = new MeshBatcher();
+        MeshBatcher bCommercial       = new MeshBatcher();
+        MeshBatcher bMixedUse         = new MeshBatcher();
+        MeshBatcher bIndustrial       = new MeshBatcher();
+        MeshBatcher bCivic            = new MeshBatcher();
+        MeshBatcher bDefault          = new MeshBatcher();
+        MeshBatcher bPenthouse        = new MeshBatcher();
+        MeshBatcher bSolarRoof        = new MeshBatcher();
 
         var rng = new System.Random(seed);
         int totalBuilt = 0;
+        int solarRoofCount = 0;
 
         // Limit buildings per block to maintain aesthetic density without runaway geometry
         const int maxPerBlock = 6;
@@ -125,13 +131,32 @@ public class BuildingGenerator
                     float centerY = terrainHeight + height * 0.5f;
                     float roofY   = terrainHeight + height;
 
-                    // Choose batcher based on archetype
-                    MeshBatcher targetBatcher = arch.type switch
+                    // Choose batcher based on district identity and archetype
+                    MeshBatcher targetBatcher = bDefault;
+                    if (block.sectorType == "industrial" || arch.type is "industrial" or "warehouse")
                     {
-                        "retail" or "office" or "tower" or "mixed_use" => bCommercial,
-                        "industrial" or "warehouse" => bIndustrial,
-                        _ => bDefault
-                    };
+                        targetBatcher = bIndustrial;
+                    }
+                    else if (block.sectorType == "civic" || arch.type is "government" or "community" or "school" or "hospital")
+                    {
+                        targetBatcher = bCivic;
+                    }
+                    else if (block.sectorType == "commercial" || arch.type is "retail" or "office")
+                    {
+                        targetBatcher = bCommercial;
+                    }
+                    else if (block.sectorType == "mixed_use" || arch.type is "mixed_use")
+                    {
+                        targetBatcher = bMixedUse;
+                    }
+                    else if (arch.type == "tower" || floors >= 10)
+                    {
+                        targetBatcher = bResidentialTower;
+                    }
+                    else if (block.sectorType == "residential" || arch.type is "house" or "apartment")
+                    {
+                        targetBatcher = bResidential;
+                    }
 
                     targetBatcher.AddBox(new Vector3(px, centerY, pz), new Vector3(bw, height, bd));
 
@@ -140,8 +165,22 @@ public class BuildingGenerator
                     {
                         float pentW = bw * 0.5f;
                         float pentD = bd * 0.5f;
-                        float pentH = Mathf.Clamp(height * 0.12f, 1.5f, 4f);
+                        float pentH = Mathf.Clamp(height * 0.10f, 1.5f, 3.5f);
                         bPenthouse.AddBox(new Vector3(px, roofY + pentH * 0.5f, pz), new Vector3(pentW, pentH, pentD));
+                    }
+
+                    // Rooftop solar installations connected to sector/city sustainability targets
+                    bool hasRooftopSolar = sector?.energy?.rooftop_solar ?? (buildingsData?.sustainability?.rooftop_solar_allowed ?? true);
+                    if (hasRooftopSolar && floors <= 12 && (rng.NextDouble() < (sector?.energy?.solar_coverage_target ?? 0.4f)))
+                    {
+                        float solarCoverage = Mathf.Clamp(sector?.energy?.solar_coverage_target ?? 0.35f, 0.2f, 0.6f);
+                        float sWidth = bw * 0.75f;
+                        float sDepth = bd * solarCoverage;
+                        float sY     = roofY + (floors >= 4 ? 0.05f : 0.05f);
+
+                        // Mount solar array on top of roof
+                        bSolarRoof.AddBox(new Vector3(px, sY + 0.1f, pz), new Vector3(sWidth, 0.12f, sDepth));
+                        solarRoofCount++;
                     }
 
                     buildingsInBlock++;
@@ -150,13 +189,18 @@ public class BuildingGenerator
             }
         }
 
-        // Build batched GameObjects (4 draw calls total for the whole city's buildings!)
-        bCommercial.BuildGameObject("Batched_Buildings_Commercial", _mats.Commercial, _buildingsRoot);
-        bIndustrial.BuildGameObject("Batched_Buildings_Industrial", _mats.Industrial, _buildingsRoot);
-        bDefault.BuildGameObject("Batched_Buildings_Residential",    _mats.Building,   _buildingsRoot);
-        bPenthouse.BuildGameObject("Batched_Buildings_Penthouses",   _pentMat,         _buildingsRoot);
+        // Build batched GameObjects with district-specific material identities
+        bResidential.BuildGameObject("Batched_Buildings_Residential",           _mats.Residential,      _buildingsRoot);
+        bResidentialTower.BuildGameObject("Batched_Buildings_ResidentialTowers", _mats.ResidentialTower, _buildingsRoot);
+        bCommercial.BuildGameObject("Batched_Buildings_Commercial",             _mats.Commercial,       _buildingsRoot);
+        bMixedUse.BuildGameObject("Batched_Buildings_MixedUse",                 _mats.MixedUse,         _buildingsRoot);
+        bIndustrial.BuildGameObject("Batched_Buildings_Industrial",             _mats.Industrial,       _buildingsRoot);
+        bCivic.BuildGameObject("Batched_Buildings_Civic",                       _mats.Civic,            _buildingsRoot);
+        bDefault.BuildGameObject("Batched_Buildings_Default",                   _mats.Building,         _buildingsRoot);
+        bPenthouse.BuildGameObject("Batched_Buildings_Penthouses",               _pentMat,               _buildingsRoot);
+        bSolarRoof.BuildGameObject("Batched_Buildings_RooftopSolar",             _mats.SolarRoof,        _buildingsRoot);
 
-        Debug.Log($"[Buildings] Generated {totalBuilt} buildings batched into unified meshes.");
+        Debug.Log($"[Buildings] Generated {totalBuilt} buildings and {solarRoofCount} rooftop solar arrays batched across distinct district identities.");
     }
 
     private void CreateSharedMaterials()

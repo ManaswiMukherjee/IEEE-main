@@ -112,7 +112,7 @@ public class CityGenerator : MonoBehaviour
                 _plan.sectors, _plan.city, seed);
             _waterGen.Generate(_plan.water, _plan.sectors, _plan.city);
             _vegetationGen.Generate(_plan.vegetation, _plan.sectors, _plan.city, seed);
-            _energyGen.Generate(_plan.energy_zones, _plan.sectors, _plan.city);
+            _energyGen.Generate(_plan.energy_zones, _plan.sectors, _plan.city, _plan.climate);
             _transportGen.Generate(_plan.transport, _plan.road_graph, _plan.city);
             _environmentGen.Generate(_plan.environment, _plan.city);
 
@@ -324,24 +324,34 @@ public class CityMaterials
     public readonly Material Industrial;
     public readonly Material Vegetation;
     public readonly Material Commercial;
+    public readonly Material Residential;
+    public readonly Material ResidentialTower;
+    public readonly Material MixedUse;
+    public readonly Material Civic;
+    public readonly Material SolarRoof;
     public readonly Material Energy;
     public readonly Material Transport;
 
     public CityMaterials()
     {
-        Terrain     = Make(new Color(0.18f, 0.32f, 0.18f), 0.1f);
-        Road        = Make(new Color(0.15f, 0.16f, 0.18f), 0.2f);
-        Sidewalk    = Make(new Color(0.72f, 0.70f, 0.65f), 0.1f);
-        Water       = Make(new Color(0.08f, 0.38f, 0.65f), 0.85f);
-        Grass       = Make(new Color(0.22f, 0.48f, 0.22f), 0.1f);
-        Building    = Make(new Color(0.75f, 0.75f, 0.78f), 0.4f);
-        Roof        = Make(new Color(0.38f, 0.36f, 0.35f), 0.2f);
-        Solar       = Make(new Color(0.04f, 0.12f, 0.32f), 0.8f);
-        Industrial  = Make(new Color(0.42f, 0.39f, 0.36f), 0.25f);
-        Vegetation  = Make(new Color(0.12f, 0.42f, 0.14f), 0.15f);
-        Commercial  = Make(new Color(0.28f, 0.45f, 0.62f), 0.6f);
-        Energy      = Make(new Color(0.08f, 0.24f, 0.45f), 0.5f);
-        Transport   = Make(new Color(0.32f, 0.34f, 0.38f), 0.3f);
+        Terrain          = Make(new Color(0.18f, 0.32f, 0.18f), 0.1f);
+        Road             = Make(new Color(0.15f, 0.16f, 0.18f), 0.2f);
+        Sidewalk         = Make(new Color(0.72f, 0.70f, 0.65f), 0.1f);
+        Water            = Make(new Color(0.08f, 0.38f, 0.65f), 0.85f);
+        Grass            = Make(new Color(0.22f, 0.48f, 0.22f), 0.1f);
+        Building         = Make(new Color(0.75f, 0.75f, 0.78f), 0.4f);
+        Roof             = Make(new Color(0.38f, 0.36f, 0.35f), 0.2f);
+        Solar            = Make(new Color(0.04f, 0.12f, 0.32f), 0.8f);
+        Industrial       = Make(new Color(0.44f, 0.41f, 0.38f), 0.25f); // Rugged slate-bronze warehouse tone
+        Vegetation       = Make(new Color(0.12f, 0.42f, 0.14f), 0.15f);
+        Commercial       = Make(new Color(0.24f, 0.48f, 0.68f), 0.65f); // Sleek modern blue reflective glass
+        MixedUse         = Make(new Color(0.42f, 0.52f, 0.58f), 0.50f); // Polished contemporary urban composite
+        Residential      = Make(new Color(0.82f, 0.76f, 0.68f), 0.25f); // Warm sandstone / stucco suburban tone
+        ResidentialTower = Make(new Color(0.72f, 0.74f, 0.78f), 0.45f); // Clean light-grey architectural concrete
+        Civic            = Make(new Color(0.88f, 0.86f, 0.82f), 0.35f); // Majestic limestone/marble public monument
+        Energy           = Make(new Color(0.08f, 0.24f, 0.45f), 0.5f);
+        Transport        = Make(new Color(0.32f, 0.34f, 0.38f), 0.3f);
+        SolarRoof        = MakeEmissive("Building_SolarRoof", new Color(0.03f, 0.10f, 0.28f), new Color(0.0f, 0.18f, 0.75f));
     }
 
     private static Material Make(Color color, float smoothness = 0.3f)
@@ -356,10 +366,25 @@ public class CityMaterials
         return mat;
     }
 
+    private static Material MakeEmissive(string name, Color color, Color emit)
+    {
+        var mat = Make(color, 0.6f);
+        mat.name = name;
+        if (mat.HasProperty("_EmissionColor"))
+        {
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", emit);
+        }
+        return mat;
+    }
+
     /// <summary>Pick a building material based on sector type string.</summary>
     public Material ForSectorType(string sectorType) => sectorType switch
     {
-        "commercial" or "mixed_use" or "office" => Commercial,
+        "commercial" or "office"                 => Commercial,
+        "mixed_use"                              => MixedUse,
+        "residential"                            => Residential,
+        "civic" or "education" or "healthcare"   => Civic,
         "industrial" or "logistics"              => Industrial,
         "energy"                                 => Energy,
         "transport"                              => Transport,

@@ -38,7 +38,8 @@ public class VegetationGenerator
         float density = gen.density > 0 ? gen.density : 50f;
         var rng = new System.Random(seed + 3);
 
-        MeshBatcher trunkBatcher = new MeshBatcher();
+        MeshBatcher groundBatcher = new MeshBatcher();
+        MeshBatcher trunkBatcher  = new MeshBatcher();
         MeshBatcher canopyBatcher = new MeshBatcher();
 
         int count = 0;
@@ -53,43 +54,64 @@ public class VegetationGenerator
             float sWidth = sector.geometry.bounds[2];
             float sDepth = sector.geometry.bounds[3];
 
+            // Render rich green park turf/slab slightly above terrain (Y = 0.03m) to give parks a dedicated natural identity
+            float pCenterX = sx + sWidth * 0.5f;
+            float pCenterZ = sz + sDepth * 0.5f;
+            float terrainH = _terrainGen != null ? _terrainGen.SampleHeight(pCenterX, pCenterZ) : 0f;
+            groundBatcher.AddBox(new Vector3(pCenterX, terrainH + 0.02f, pCenterZ), new Vector3(sWidth - 2f, 0.03f, sDepth - 2f));
+
             float areaHa    = (sWidth * sDepth) / 10000f;
             int   treeCount = Mathf.RoundToInt(areaHa * density);
-            treeCount = Mathf.Clamp(treeCount, 15, 160);
+            treeCount = Mathf.Clamp(treeCount, 25, 200);
 
             for (int i = 0; i < treeCount; i++)
             {
-                float px = sx + 4f + (float)rng.NextDouble() * (sWidth - 8f);
-                float pz = sz + 4f + (float)rng.NextDouble() * (sDepth - 8f);
+                float px = sx + 5f + (float)rng.NextDouble() * (sWidth - 10f);
+                float pz = sz + 5f + (float)rng.NextDouble() * (sDepth - 10f);
 
-                float trunkH  = 1.5f + (float)rng.NextDouble() * 1.5f;
-                float trunkR  = 0.25f + (float)rng.NextDouble() * 0.15f;
-                float canopyR = 2.2f + (float)rng.NextDouble() * 2.0f;
+                float tHeight = _terrainGen != null ? _terrainGen.SampleHeight(px, pz) : 0f;
 
-                float terrainHeight = _terrainGen != null ? _terrainGen.SampleHeight(px, pz) : 0f;
+                // Organic variety: 70% mature trees, 30% flowering/green shrubs
+                bool isShrub = (rng.NextDouble() < 0.25f);
 
-                // Natural rounded trunk with smooth normals
-                trunkBatcher.AddCylinder(
-                    new Vector3(px, terrainHeight, pz),
-                    trunkR,
-                    trunkH,
-                    12);
+                if (isShrub)
+                {
+                    float shrubR = 1.0f + (float)rng.NextDouble() * 0.8f;
+                    canopyBatcher.AddCanopy(
+                        new Vector3(px, tHeight + shrubR * 0.6f, pz),
+                        new Vector3(shrubR, shrubR * 0.7f, shrubR),
+                        6, 10);
+                }
+                else
+                {
+                    float trunkH  = 1.8f + (float)rng.NextDouble() * 2.2f;
+                    float trunkR  = 0.25f + (float)rng.NextDouble() * 0.15f;
+                    float canopyR = 2.4f + (float)rng.NextDouble() * 2.2f;
 
-                // Natural rounded organic canopy with smooth outward normals
-                canopyBatcher.AddCanopy(
-                    new Vector3(px, terrainHeight + trunkH + canopyR * 0.75f, pz),
-                    new Vector3(canopyR, canopyR * 1.15f, canopyR),
-                    8,
-                    14);
+                    // Smooth cylindrical trunk
+                    trunkBatcher.AddCylinder(
+                        new Vector3(px, tHeight, pz),
+                        trunkR,
+                        trunkH,
+                        12);
+
+                    // Multi-tiered smooth canopy
+                    canopyBatcher.AddCanopy(
+                        new Vector3(px, tHeight + trunkH + canopyR * 0.75f, pz),
+                        new Vector3(canopyR, canopyR * 1.15f, canopyR),
+                        8,
+                        14);
+                }
 
                 count++;
             }
         }
 
-        trunkBatcher.BuildGameObject("Batched_Trunks", _mats?.Industrial ?? _mats.Building, vegRoot);
-        canopyBatcher.BuildGameObject("Batched_Canopies", _mats?.Vegetation ?? _mats.Grass, vegRoot);
+        groundBatcher.BuildGameObject("Batched_ParkGrounds",   _mats?.Grass ?? _mats.Vegetation, vegRoot);
+        trunkBatcher.BuildGameObject("Batched_Trunks",         _mats?.Industrial ?? _mats.Building, vegRoot);
+        canopyBatcher.BuildGameObject("Batched_Canopies",       _mats?.Vegetation ?? _mats.Grass, vegRoot);
 
-        Debug.Log($"[Vegetation] Generated {count} natural rounded trees batched into 2 unified meshes.");
+        Debug.Log($"[Vegetation] Generated {count} natural trees and shrubs with lush park grounds.");
     }
 
     private static bool IsVegetationSector(string type) => type is
