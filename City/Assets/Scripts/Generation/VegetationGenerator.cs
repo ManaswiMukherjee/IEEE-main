@@ -68,25 +68,76 @@ public class VegetationGenerator
         Debug.Log($"[Vegetation] Generated {count} vegetation objects.");
     }
 
-    private void PlaceTree(int index, float px, float pz, float trunkH, float canopyR, Transform parent)
+
+    private void PlaceTree(
+        int index,
+        float px,
+        float pz,
+        float trunkH,
+        float canopyR,
+        Transform parent)
     {
-        float terrainHeight = _terrainGen != null ? _terrainGen.SampleHeight(px, pz) : 0f;
+        float terrainHeight = _terrainGen != null
+            ? _terrainGen.SampleHeight(px, pz)
+            : 0f;
 
-        GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        // Create trunk.
+        GameObject trunk = GameObject.CreatePrimitive(
+            PrimitiveType.Cylinder);
+
         trunk.name = $"Tree_{index}_Trunk";
-        trunk.transform.SetParent(parent);
-        trunk.transform.position   = new Vector3(px, terrainHeight + trunkH * 0.5f, pz);
-        trunk.transform.localScale = new Vector3(0.25f, trunkH, 0.25f);
-        trunk.GetComponent<Renderer>().material = _mats.Building; // brown-ish default
-        UnityEngine.Object.Destroy(trunk.GetComponent<CapsuleCollider>());
+        trunk.transform.SetParent(parent, false);
 
-        GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        trunk.transform.position = new Vector3(
+            px,
+            terrainHeight + trunkH * 0.5f,
+            pz);
+
+        trunk.transform.localScale = new Vector3(
+            0.25f,
+            trunkH,
+            0.25f);
+
+        Renderer trunkRenderer = trunk.GetComponent<Renderer>();
+
+        if (_mats?.Building != null)
+            trunkRenderer.sharedMaterial = _mats.Building;
+
+        trunkRenderer.shadowCastingMode =
+            UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        trunkRenderer.receiveShadows = false;
+
+        Object.Destroy(trunk.GetComponent<CapsuleCollider>());
+
+        // Create canopy.
+        GameObject canopy = GameObject.CreatePrimitive(
+            PrimitiveType.Sphere);
+
         canopy.name = $"Tree_{index}_Canopy";
-        canopy.transform.SetParent(parent);
-        canopy.transform.position   = new Vector3(px, terrainHeight + trunkH + canopyR * 0.7f, pz);
-        canopy.transform.localScale = new Vector3(canopyR * 2f, canopyR * 1.5f, canopyR * 2f);
-        canopy.GetComponent<Renderer>().material = _mats.Vegetation;
-        UnityEngine.Object.Destroy(canopy.GetComponent<SphereCollider>());
+        canopy.transform.SetParent(parent, false);
+
+        canopy.transform.position = new Vector3(
+            px,
+            terrainHeight + trunkH + canopyR * 0.7f,
+            pz);
+
+        canopy.transform.localScale = new Vector3(
+            canopyR * 2f,
+            canopyR * 1.5f,
+            canopyR * 2f);
+
+        Renderer canopyRenderer = canopy.GetComponent<Renderer>();
+
+        if (_mats?.Vegetation != null)
+            canopyRenderer.sharedMaterial = _mats.Vegetation;
+
+        canopyRenderer.shadowCastingMode =
+            UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        canopyRenderer.receiveShadows = false;
+
+        Object.Destroy(canopy.GetComponent<SphereCollider>());
     }
 
     private static bool IsVegetationSector(string type) => type is

@@ -93,6 +93,9 @@ public class BuildingGenerator
             int colCount = Mathf.Max(1, Mathf.FloorToInt(innerW / (plotW + gap)));
             int rowCount = Mathf.Max(1, Mathf.FloorToInt(innerD / (plotD + gap)));
             int buildingsInBlock = 0;
+            float totalBuildingArea = 0f;
+            float blockArea = block.width * block.depth;
+            float maxBuildingArea = blockArea * maxCoverage;
 
             for (int row = 0; row < rowCount && buildingsInBlock < maxPerBlock; row++)
             {
@@ -101,10 +104,31 @@ public class BuildingGenerator
                     // Pick archetype for this plot
                     var arch = allowed[rng.Next(allowed.Count)];
 
-                    float bw = Lerp(arch.footprint.minimum_width, arch.footprint.maximum_width,
-                                    (float)rng.NextDouble());
-                    float bd = Lerp(arch.footprint.minimum_depth, arch.footprint.maximum_depth,
-                                    (float)rng.NextDouble());
+
+                    float availableW = plotW;
+                    float availableD = plotD;
+
+                    float minW = Mathf.Min(
+                        arch.footprint.minimum_width, availableW);
+
+                    float minD = Mathf.Min(
+                        arch.footprint.minimum_depth, availableD);
+
+                    float bw = Mathf.Clamp(
+                        Lerp(
+                            arch.footprint.minimum_width,
+                            arch.footprint.maximum_width,
+                            (float)rng.NextDouble()),
+                        minW,
+                        availableW);
+
+                    float bd = Mathf.Clamp(
+                        Lerp(
+                            arch.footprint.minimum_depth,
+                            arch.footprint.maximum_depth,
+                            (float)rng.NextDouble()),
+                        minD,
+                        availableD);
 
                     int floors = rng.Next(
                         Mathf.Max(1, rules.height.minimum_floors),
@@ -116,12 +140,18 @@ public class BuildingGenerator
                     float pz = block.z + frontSetback + row * (plotD + gap) + bd * 0.5f;
 
                     // Check coverage won't be exceeded (approximation)
-                    float covSoFar = (buildingsInBlock * bw * bd) / (block.width * block.depth);
-                    if (covSoFar > maxCoverage) break;
+                    float buildingArea = bw * bd;
+
+                    if (blockArea <= 0f ||
+                        totalBuildingArea + buildingArea > maxBuildingArea)
+                    {
+                        continue;
+                    }
 
                     PlaceBuilding(buildingIndex++, arch, px, height, pz, bw, bd,
                         block.sectorType, sector);
                     buildingsInBlock++;
+                    totalBuildingArea += buildingArea;
                     totalBuilt++;
                 }
             }
@@ -147,7 +177,15 @@ public class BuildingGenerator
         go.transform.position   = new Vector3(px, centerY, pz);
         go.transform.localScale = new Vector3(bw, height, bd);
 
-        go.GetComponent<Renderer>().material = MaterialForArchetype(arch.type, sectorType);
+        Renderer buildingRenderer = go.GetComponent<Renderer>();
+
+        buildingRenderer.sharedMaterial =
+            MaterialForArchetype(arch.type, sectorType);
+
+        buildingRenderer.shadowCastingMode =
+            UnityEngine.Rendering.ShadowCastingMode.Off;
+
+        buildingRenderer.receiveShadows = false;
         UnityEngine.Object.Destroy(go.GetComponent<BoxCollider>());
     }
 
