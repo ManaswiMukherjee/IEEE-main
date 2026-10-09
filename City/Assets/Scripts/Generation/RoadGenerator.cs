@@ -1,31 +1,25 @@
 // RoadGenerator.cs
 // Generates a realistic layered road network:
-//   1. Renders all edges from the road_graph (arterials, collectors, locals, cycle, pedestrian)
-//      each with: road body + sidewalks + curb strips + center markings + intersection pads.
-//   2. Procedurally generates an orthogonal local-road grid inside every developable sector
-//      using the sector's street_rules or sensible defaults.
+//   1. Renders all edges from the road_graph (arterials, collectors, locals, cycle, pedestrian).
+//   2. Procedurally generates an orthogonal local-road grid inside every developable sector.
 //   3. Street trees along arterials and collectors.
+// Clear visual hierarchy:
+//   - Elevated above ground and blocks so they are crisp, bold, and fully visible from any altitude.
+//   - Strong contrast asphalt colors + distinct sidewalk pavements + bright road markings.
+//   - High-throughput mesh batching for optimal framerate.
 
 using System.Collections.Generic;
 using UnityEngine;
 
 public class RoadGenerator
 {
-    // ── Scene hierarchy roots ─────────────────────────────────────────────────
     private Transform _roadsRoot;
-    private Transform _arterialsRoot;
-    private Transform _collectorsRoot;
-    private Transform _localRoot;
-    private Transform _pedestrianRoot;
-    private Transform _cycleRoot;
-    private Transform _treesRoot;
 
-    // ── Shared dependencies ───────────────────────────────────────────────────
     private readonly Transform        _parent;
     private readonly CityMaterials    _mats;
     private readonly TerrainGenerator _terrainGen;
 
-    // ── Per-type materials ────────────────────────────────────────────────────
+    // Per-type materials
     private Material _matArterial;
     private Material _matCollector;
     private Material _matLocal;
@@ -38,31 +32,39 @@ public class RoadGenerator
     private Material _matTreeTrunk;
     private Material _matTreeCanopy;
 
-    // ── Constants ─────────────────────────────────────────────────────────────
-    private const float RoadY        = 0.02f;  // road surface lift above terrain
-    private const float SidewalkY    = 0.04f;  // sidewalk slightly higher
-    private const float CurbY        = 0.08f;  // curb higher still
-    private const float CenterLineY  = 0.03f;  // dashes float on road
-    private const float IntersectY   = 0.015f; // intersection pad flush
+    // Layer elevations — generously elevated above block slabs (block top ≈ 0.07m).
+    // Keep strict ascending order: Intersection = Road < CenterLine < Sidewalk < Curb.
+    private const float IntersectY   = 0.15f;
+    private const float RoadY        = 0.15f;
+    private const float CenterLineY  = 0.20f;
+    private const float SidewalkY    = 0.22f;
+    private const float CurbY        = 0.28f;
 
     private const float MinSegLen    = 0.5f;
-
-    // Sidewalk and curb widths (metres, world space)
     private const float SidewalkWidth = 2.5f;
-    private const float CurbWidth     = 0.3f;
+    private const float CurbWidth     = 0.35f;
 
-    // Tree spacing along arterials / collectors
-    private const float TreeSpacing       = 20f;
-    private const float TreeMinSpacing    = 8f;
-    private const float TreeTrunkRadius   = 0.18f;
-    private const float TreeTrunkHeight   = 2.0f;
-    private const float TreeCanopyRadius  = 2.5f;
-    private const float TreeCanopyOffsetY = 3.0f;
+    private const float TreeSpacing       = 35f;
+    private const float TreeMinSpacing    = 15f;
+    private const float TreeTrunkRadius   = 0.25f;
+    private const float TreeTrunkHeight   = 2.5f;
+    private const float TreeCanopyRadius  = 2.8f;
+    private const float TreeCanopyOffsetY = 3.2f;
 
-    // ── State: collected node positions for procedural local grid ─────────────
     private Dictionary<string, Vector2> _nodePositions;
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // High performance batchers
+    private MeshBatcher _bArterial;
+    private MeshBatcher _bCollector;
+    private MeshBatcher _bLocal;
+    private MeshBatcher _bCurb;
+    private MeshBatcher _bSidewalk;
+    private MeshBatcher _bCycleway;
+    private MeshBatcher _bPedestrian;
+    private MeshBatcher _bCenterLine;
+    private MeshBatcher _bIntersection;
+    private MeshBatcher _bTreeTrunk;
+    private MeshBatcher _bTreeCanopy;
 
     public RoadGenerator(Transform parent, CityMaterials mats, TerrainGenerator terrainGen = null)
     {
@@ -71,26 +73,24 @@ public class RoadGenerator
         _terrainGen = terrainGen;
     }
 
-    // ── Public entry point ────────────────────────────────────────────────────
-
     public void Generate(RoadGraphData roadGraph, CityData city)
     {
         BuildMaterials();
-        BuildHierarchy();
+        InitBatchers();
+
+        _roadsRoot = new GameObject("Roads").transform;
+        _roadsRoot.SetParent(_parent, false);
 
         _nodePositions = new Dictionary<string, Vector2>();
 
         if (roadGraph != null)
         {
-            // Index node positions
             foreach (var node in roadGraph.nodes)
                 _nodePositions[node.id] = new Vector2(node.position.x, node.position.z);
 
-            // Render intersection pads first (drawn under roads)
             foreach (var node in roadGraph.nodes)
                 RenderIntersectionPad(node, roadGraph.edges);
 
-            // Render each edge with full cross-section
             int edgeCount = 0;
             foreach (var edge in roadGraph.edges)
             {
@@ -102,52 +102,100 @@ public class RoadGenerator
 
             Debug.Log($"[Roads] Rendered {edgeCount} road_graph edges.");
         }
-        else
-        {
-            Debug.LogWarning("[Roads] No road_graph defined – only procedural grid will be generated.");
-        }
 
+        FlushBatches();
         Debug.Log("[Roads] Road generation complete.");
     }
-
-    // ── Overload that also generates local grids per sector ──────────────────
 
     public void GenerateWithSectors(
         RoadGraphData      roadGraph,
         List<SectorData>   sectors,
         CityData           city)
     {
-        Generate(roadGraph, city);
+        BuildMaterials();
+        InitBatchers();
 
-        if (sectors == null) return;
+        _roadsRoot = new GameObject("Roads").transform;
+        _roadsRoot.SetParent(_parent, false);
 
-        int localCount = 0;
-        foreach (var sector in sectors)
+        _nodePositions = new Dictionary<string, Vector2>();
+
+        if (roadGraph != null)
         {
-            if (IsNonRoadSector(sector.type)) continue;
-            if (sector.geometry?.bounds == null || sector.geometry.bounds.Length < 4) continue;
+            foreach (var node in roadGraph.nodes)
+                _nodePositions[node.id] = new Vector2(node.position.x, node.position.z);
 
-            localCount += GenerateLocalGrid(sector);
+            foreach (var node in roadGraph.nodes)
+                RenderIntersectionPad(node, roadGraph.edges);
+
+            foreach (var edge in roadGraph.edges)
+            {
+                if (!_nodePositions.TryGetValue(edge.from, out var a)) continue;
+                if (!_nodePositions.TryGetValue(edge.to,   out var b)) continue;
+                RenderEdge(edge, a, b);
+            }
         }
 
-        Debug.Log($"[Roads] Generated {localCount} local road segments across sectors.");
+        if (sectors != null)
+        {
+            int localCount = 0;
+            foreach (var sector in sectors)
+            {
+                if (IsNonRoadSector(sector.type)) continue;
+                if (sector.geometry?.bounds == null || sector.geometry.bounds.Length < 4) continue;
+                localCount += GenerateLocalGrid(sector);
+            }
+            Debug.Log($"[Roads] Generated {localCount} local road segments across sectors.");
+        }
+
+        FlushBatches();
+        Debug.Log("[Roads] Road generation complete with all meshes batched into single draw calls.");
     }
 
-    // ── Material factory ──────────────────────────────────────────────────────
+    private void InitBatchers()
+    {
+        _bArterial     = new MeshBatcher();
+        _bCollector    = new MeshBatcher();
+        _bLocal        = new MeshBatcher();
+        _bCurb         = new MeshBatcher();
+        _bSidewalk     = new MeshBatcher();
+        _bCycleway     = new MeshBatcher();
+        _bPedestrian   = new MeshBatcher();
+        _bCenterLine   = new MeshBatcher();
+        _bIntersection = new MeshBatcher();
+        _bTreeTrunk    = new MeshBatcher();
+        _bTreeCanopy   = new MeshBatcher();
+    }
+
+    private void FlushBatches()
+    {
+        _bIntersection.BuildGameObject("Batched_Intersections", _matIntersection, _roadsRoot);
+        _bArterial.BuildGameObject("Batched_Arterials",         _matArterial,     _roadsRoot);
+        _bCollector.BuildGameObject("Batched_Collectors",       _matCollector,    _roadsRoot);
+        _bLocal.BuildGameObject("Batched_Locals",               _matLocal,        _roadsRoot);
+        _bCurb.BuildGameObject("Batched_Curbs",                 _matCurb,         _roadsRoot);
+        _bSidewalk.BuildGameObject("Batched_Sidewalks",         _matSidewalk,     _roadsRoot);
+        _bCycleway.BuildGameObject("Batched_Cycleways",         _matCycleway,     _roadsRoot);
+        _bPedestrian.BuildGameObject("Batched_Pedestrians",     _matPedestrian,   _roadsRoot);
+        _bCenterLine.BuildGameObject("Batched_CenterLines",     _matCenterLine,   _roadsRoot);
+        _bTreeTrunk.BuildGameObject("Batched_TreeTrunks",       _matTreeTrunk,    _roadsRoot);
+        _bTreeCanopy.BuildGameObject("Batched_TreeCanopies",    _matTreeCanopy,   _roadsRoot);
+    }
 
     private void BuildMaterials()
     {
-        _matArterial    = MakeRoad("Road_Arterial",    new Color(0.18f, 0.18f, 0.20f), 0.35f);
-        _matCollector   = MakeRoad("Road_Collector",   new Color(0.20f, 0.20f, 0.22f), 0.30f);
-        _matLocal       = MakeRoad("Road_Local",       new Color(0.22f, 0.22f, 0.24f), 0.20f);
-        _matCurb        = MakeRoad("Road_Curb",        new Color(0.60f, 0.60f, 0.62f), 0.15f);
-        _matSidewalk    = MakeRoad("Road_Sidewalk",    new Color(0.80f, 0.78f, 0.74f), 0.10f);
-        _matCycleway    = MakeRoad("Road_Cycle",       new Color(0.62f, 0.78f, 0.62f), 0.20f);
-        _matPedestrian  = MakeRoad("Road_Pedestrian",  new Color(0.88f, 0.84f, 0.78f), 0.10f);
-        _matCenterLine  = MakeEmissive("Road_CenterLine", new Color(0.95f, 0.85f, 0.2f), new Color(0.4f, 0.35f, 0.0f));
-        _matIntersection = MakeRoad("Road_Intersection", new Color(0.16f, 0.16f, 0.18f), 0.35f);
-        _matTreeTrunk   = MakeRoad("Tree_Trunk",  new Color(0.38f, 0.26f, 0.14f), 0.1f);
-        _matTreeCanopy  = MakeRoad("Tree_Canopy", new Color(0.18f, 0.48f, 0.18f), 0.1f);
+        // High-contrast, vibrant road materials
+        _matArterial    = MakeRoad("Road_Arterial",    new Color(0.12f, 0.13f, 0.15f), 0.40f);
+        _matCollector   = MakeRoad("Road_Collector",   new Color(0.15f, 0.16f, 0.18f), 0.35f);
+        _matLocal       = MakeRoad("Road_Local",       new Color(0.18f, 0.19f, 0.22f), 0.30f);
+        _matCurb        = MakeRoad("Road_Curb",        new Color(0.65f, 0.65f, 0.68f), 0.25f);
+        _matSidewalk    = MakeRoad("Road_Sidewalk",    new Color(0.85f, 0.83f, 0.78f), 0.15f);
+        _matCycleway    = MakeRoad("Road_Cycle",       new Color(0.20f, 0.65f, 0.35f), 0.30f);
+        _matPedestrian  = MakeRoad("Road_Pedestrian",  new Color(0.88f, 0.85f, 0.80f), 0.15f);
+        _matCenterLine  = MakeEmissive("Road_CenterLine", new Color(1.0f, 0.90f, 0.2f), new Color(1.5f, 1.2f, 0.1f));
+        _matIntersection = MakeRoad("Road_Intersection", new Color(0.11f, 0.12f, 0.14f), 0.40f);
+        _matTreeTrunk   = MakeRoad("Tree_Trunk",  new Color(0.38f, 0.25f, 0.14f), 0.15f);
+        _matTreeCanopy  = MakeRoad("Tree_Canopy", new Color(0.15f, 0.52f, 0.18f), 0.25f);
     }
 
     private static Material MakeRoad(string name, Color color, float smoothness)
@@ -172,51 +220,31 @@ public class RoadGenerator
         return m;
     }
 
-    // ── Scene hierarchy ───────────────────────────────────────────────────────
-
-    private void BuildHierarchy()
-    {
-        _roadsRoot      = MakeGroup(_parent, "Roads");
-        _arterialsRoot  = MakeGroup(_roadsRoot, "Arterials");
-        _collectorsRoot = MakeGroup(_roadsRoot, "Collectors");
-        _localRoot      = MakeGroup(_roadsRoot, "Local");
-        _pedestrianRoot = MakeGroup(_roadsRoot, "Pedestrian");
-        _cycleRoot      = MakeGroup(_roadsRoot, "Cycle");
-        _treesRoot      = MakeGroup(_roadsRoot, "StreetTrees");
-    }
-
-    private static Transform MakeGroup(Transform parent, string name)
-    {
-        var g = new GameObject(name);
-        g.transform.SetParent(parent, false);
-        return g.transform;
-    }
-
-    // ── Intersection pad ──────────────────────────────────────────────────────
-    // Fills the gap where roads meet with a square pad as wide as the widest
-    // connecting road.
-
     private void RenderIntersectionPad(RoadNodeData node, List<RoadEdgeData> edges)
     {
         Vector2 pos = new Vector2(node.position.x, node.position.z);
         float maxWidth = 8f;
 
-        foreach (var e in edges)
+        if (edges != null)
         {
-            if ((e.from == node.id || e.to == node.id) && e.width > maxWidth)
-                maxWidth = e.width;
+            foreach (var e in edges)
+            {
+                if ((e.from == node.id || e.to == node.id) && e.width > maxWidth)
+                    maxWidth = e.width;
+            }
         }
 
-        // Include sidewalk + curb on each side
         float padSize = maxWidth + (SidewalkWidth + CurbWidth) * 2f;
         float y       = GetY(pos.x, pos.y) + IntersectY;
 
-        var pad = QuadFlat($"Intersection_{node.id}", _matIntersection, _roadsRoot);
-        pad.transform.position   = new Vector3(pos.x, y, pos.y);
-        pad.transform.localScale = new Vector3(padSize, 1f, padSize);
-    }
+        float h = padSize * 0.5f;
+        Vector3 v0 = new Vector3(pos.x - h, y, pos.y - h);
+        Vector3 v1 = new Vector3(pos.x - h, y, pos.y + h);
+        Vector3 v2 = new Vector3(pos.x + h, y, pos.y + h);
+        Vector3 v3 = new Vector3(pos.x + h, y, pos.y - h);
 
-    // ── Full edge cross-section ───────────────────────────────────────────────
+        _bIntersection.AddQuad(v0, v1, v2, v3, Vector2.zero, Vector2.up, Vector2.one, Vector2.right);
+    }
 
     private void RenderEdge(RoadEdgeData edge, Vector2 a, Vector2 b)
     {
@@ -226,17 +254,15 @@ public class RoadGenerator
         bool isPed       = edge.type == "pedestrian";
 
         float roadW = edge.width > 0f ? edge.width : DefaultWidth(edge.type);
-
-        Transform roadParent = RootForType(edge.type);
-        Material  roadMat    = MatForType(edge.type);
+        MeshBatcher targetBatcher = BatcherForType(edge.type);
 
         string routing = edge.geometry?.routing ?? "straight";
 
         if (routing == "orthogonal")
         {
             Vector2 corner = new Vector2(b.x, a.y);
-            RenderCrossSection(edge, a, corner, roadW, roadMat, roadParent, isArterial, isCollector, isCycle, isPed);
-            RenderCrossSection(edge, corner, b, roadW, roadMat, roadParent, isArterial, isCollector, isCycle, isPed);
+            RenderCrossSection(edge, a, corner, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
+            RenderCrossSection(edge, corner, b, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
         }
         else if (routing == "custom" && edge.geometry?.waypoints != null && edge.geometry.waypoints.Count >= 2)
         {
@@ -245,12 +271,12 @@ public class RoadGenerator
             {
                 var pa = new Vector2(wp[i].x, wp[i].z);
                 var pb = new Vector2(wp[i + 1].x, wp[i + 1].z);
-                RenderCrossSection(edge, pa, pb, roadW, roadMat, roadParent, isArterial, isCollector, isCycle, isPed);
+                RenderCrossSection(edge, pa, pb, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
             }
         }
         else
         {
-            RenderCrossSection(edge, a, b, roadW, roadMat, roadParent, isArterial, isCollector, isCycle, isPed);
+            RenderCrossSection(edge, a, b, roadW, targetBatcher, isArterial, isCollector, isCycle, isPed);
         }
     }
 
@@ -258,66 +284,58 @@ public class RoadGenerator
         RoadEdgeData edge,
         Vector2 a2, Vector2 b2,
         float roadW,
-        Material roadMat,
-        Transform roadParent,
+        MeshBatcher roadBatcher,
         bool isArterial, bool isCollector,
         bool isCycle,    bool isPed)
     {
         float len = Vector2.Distance(a2, b2);
         if (len < MinSegLen) return;
 
-        string id  = edge.id;
         bool hasSidewalk = !isCycle && !isPed && (edge.sidewalk?.enabled ?? true);
         bool hasCycle    = !isCycle && !isPed && (edge.cycling?.enabled ?? false);
 
-        // ── Road body ─────────────────────────────────────────────────────────
-        BuildFlatQuad($"Road_{id}", a2, b2, roadW, GetY, RoadY, roadMat, roadParent);
+        // Road body
+        AddFlatStrip(roadBatcher, a2, b2, roadW, 0f, RoadY);
 
-        // ── Sidewalks + curbs on each side ────────────────────────────────────
+        // Sidewalks & Curbs
         if (hasSidewalk)
         {
-            float totalSide = SidewalkWidth + CurbWidth;
-
-            // Left side (negative right)
             float leftCenter = roadW * 0.5f + CurbWidth * 0.5f;
-            BuildFlatQuadOffset($"Curb_{id}_L", a2, b2, CurbWidth, -leftCenter, GetY, CurbY, _matCurb, roadParent);
-            float leftSWCenter = roadW * 0.5f + CurbWidth + SidewalkWidth * 0.5f;
-            BuildFlatQuadOffset($"SW_{id}_L", a2, b2, SidewalkWidth, -leftSWCenter, GetY, SidewalkY, _matSidewalk, roadParent);
+            AddFlatStrip(_bCurb, a2, b2, CurbWidth, -leftCenter, CurbY);
+            AddFlatStrip(_bCurb, a2, b2, CurbWidth,  leftCenter, CurbY);
 
-            // Right side
-            BuildFlatQuadOffset($"Curb_{id}_R", a2, b2, CurbWidth,     leftCenter,   GetY, CurbY,     _matCurb,     roadParent);
-            BuildFlatQuadOffset($"SW_{id}_R",   a2, b2, SidewalkWidth, leftSWCenter, GetY, SidewalkY, _matSidewalk, roadParent);
+            float leftSWCenter = roadW * 0.5f + CurbWidth + SidewalkWidth * 0.5f;
+            AddFlatStrip(_bSidewalk, a2, b2, SidewalkWidth, -leftSWCenter, SidewalkY);
+            AddFlatStrip(_bSidewalk, a2, b2, SidewalkWidth,  leftSWCenter, SidewalkY);
         }
 
-        // ── Cycle lane alongside sidewalk ─────────────────────────────────────
+        // Cycle lane
         if (hasCycle)
         {
             float cycleW      = edge.cycling.width > 0f ? edge.cycling.width : 1.5f;
             float totalOffset = roadW * 0.5f + CurbWidth + SidewalkWidth + cycleW * 0.5f;
-            BuildFlatQuadOffset($"Cycle_{id}_L", a2, b2, cycleW, -totalOffset, GetY, SidewalkY + 0.005f, _matCycleway, roadParent);
-            BuildFlatQuadOffset($"Cycle_{id}_R", a2, b2, cycleW,  totalOffset, GetY, SidewalkY + 0.005f, _matCycleway, roadParent);
+            AddFlatStrip(_bCycleway, a2, b2, cycleW, -totalOffset, SidewalkY + 0.005f);
+            AddFlatStrip(_bCycleway, a2, b2, cycleW,  totalOffset, SidewalkY + 0.005f);
         }
 
-        // ── Center line markings (arterials/collectors only) ──────────────────
+        // Center line markings
         if (isArterial || isCollector)
         {
-            float dashLen     = isArterial ? 4f : 2.5f;
-            float dashGap     = isArterial ? 6f : 4f;
-            float dashW       = 0.25f;
-            float markingY    = GetMidY(a2, b2) + CenterLineY;
+            float dashLen  = isArterial ? 5f : 3f;
+            float dashGap  = isArterial ? 5f : 4f;
+            float dashW    = 0.35f;
+            float markingY = GetMidY(a2, b2) + CenterLineY;
 
-            RenderDashedLine($"CenterLine_{id}", a2, b2, dashW, dashLen, dashGap, markingY, _matCenterLine, roadParent);
+            AddDashedLine(_bCenterLine, a2, b2, dashW, dashLen, dashGap, markingY);
         }
 
-        // ── Street trees along arterials/collectors ───────────────────────────
+        // Street trees
         if ((isArterial || isCollector) && (edge.street_trees?.enabled ?? false))
         {
             float treeOffset = roadW * 0.5f + CurbWidth + SidewalkWidth * 0.7f;
-            SpawnStreetTrees($"Trees_{id}", a2, b2, treeOffset, TreeSpacing);
+            AddStreetTrees(a2, b2, treeOffset, TreeSpacing);
         }
     }
-
-    // ── Procedural local road grid inside each sector ─────────────────────────
 
     private int GenerateLocalGrid(SectorData sector)
     {
@@ -328,7 +346,7 @@ public class RoadGenerator
         float sDepth = bounds[3];
 
         float roadW   = sector.street_rules?.local_roads?.width > 0
-            ? sector.street_rules.local_roads.width : 8f;
+            ? sector.street_rules.local_roads.width : 9f;
 
         float spacingX = sector.street_rules?.blocks != null
             ? (sector.street_rules.blocks.minimum_width + sector.street_rules.blocks.maximum_width) * 0.5f
@@ -341,205 +359,130 @@ public class RoadGenerator
         spacingX = Mathf.Max(spacingX, 60f);
         spacingZ = Mathf.Max(spacingZ, 50f);
 
-        bool hasSidewalk = true;
-        bool hasTrees    = sector.street_rules?.street_trees?.enabled ?? false;
+        bool hasSidewalk  = true;
+        bool hasTrees     = sector.street_rules?.street_trees?.enabled ?? false;
         float treeSpacing = sector.street_rules?.street_trees?.spacing > 0
-            ? sector.street_rules.street_trees.spacing : TreeSpacing;
+            ? Mathf.Max(sector.street_rules.street_trees.spacing, 25f) : 35f;
 
         int count = 0;
-        string sid = sector.id;
 
-        // ── E–W roads (constant Z lines) ─────────────────────────────────────
+        // E-W roads
         float z = sz + spacingZ;
-        int ri  = 0;
         while (z < sz + sDepth - spacingZ * 0.3f)
         {
             Vector2 a = new Vector2(sx, z);
             Vector2 b = new Vector2(sx + sWidth, z);
-            BuildFlatQuad($"LR_{sid}_EW_{ri}", a, b, roadW, GetY, RoadY, _matLocal, _localRoot);
+            AddFlatStrip(_bLocal, a, b, roadW, 0f, RoadY);
 
             if (hasSidewalk)
             {
-                BuildFlatQuadOffset($"SW_{sid}_EW_{ri}_L", a, b, SidewalkWidth, -(roadW * 0.5f + SidewalkWidth * 0.5f), GetY, SidewalkY, _matSidewalk, _localRoot);
-                BuildFlatQuadOffset($"SW_{sid}_EW_{ri}_R", a, b, SidewalkWidth,   roadW * 0.5f + SidewalkWidth * 0.5f,  GetY, SidewalkY, _matSidewalk, _localRoot);
+                float swOffset = roadW * 0.5f + SidewalkWidth * 0.5f;
+                AddFlatStrip(_bSidewalk, a, b, SidewalkWidth, -swOffset, SidewalkY);
+                AddFlatStrip(_bSidewalk, a, b, SidewalkWidth,  swOffset, SidewalkY);
             }
 
             if (hasTrees)
             {
-                SpawnStreetTrees($"LT_{sid}_EW_{ri}", a, b, roadW * 0.5f + SidewalkWidth * 0.7f, treeSpacing);
+                AddStreetTrees(a, b, roadW * 0.5f + SidewalkWidth * 0.7f, treeSpacing);
             }
 
             z += spacingZ;
-            ri++;
             count++;
         }
 
-        // ── N–S roads (constant X lines) ─────────────────────────────────────
+        // N-S roads
         float x = sx + spacingX;
-        int ci  = 0;
         while (x < sx + sWidth - spacingX * 0.3f)
         {
             Vector2 a = new Vector2(x, sz);
             Vector2 b = new Vector2(x, sz + sDepth);
-            BuildFlatQuad($"LR_{sid}_NS_{ci}", a, b, roadW, GetY, RoadY, _matLocal, _localRoot);
+            AddFlatStrip(_bLocal, a, b, roadW, 0f, RoadY);
 
             if (hasSidewalk)
             {
-                BuildFlatQuadOffset($"SW_{sid}_NS_{ci}_L", a, b, SidewalkWidth, -(roadW * 0.5f + SidewalkWidth * 0.5f), GetY, SidewalkY, _matSidewalk, _localRoot);
-                BuildFlatQuadOffset($"SW_{sid}_NS_{ci}_R", a, b, SidewalkWidth,   roadW * 0.5f + SidewalkWidth * 0.5f,  GetY, SidewalkY, _matSidewalk, _localRoot);
+                float swOffset = roadW * 0.5f + SidewalkWidth * 0.5f;
+                AddFlatStrip(_bSidewalk, a, b, SidewalkWidth, -swOffset, SidewalkY);
+                AddFlatStrip(_bSidewalk, a, b, SidewalkWidth,  swOffset, SidewalkY);
             }
 
             if (hasTrees)
             {
-                SpawnStreetTrees($"LT_{sid}_NS_{ci}", a, b, roadW * 0.5f + SidewalkWidth * 0.7f, treeSpacing);
+                AddStreetTrees(a, b, roadW * 0.5f + SidewalkWidth * 0.7f, treeSpacing);
             }
 
             x += spacingX;
-            ci++;
             count++;
         }
 
         return count;
     }
 
-    // ── Mesh builders ─────────────────────────────────────────────────────────
-
-    /// Build a flat road quad between two 2D world points at a given lateral width.
-    private void BuildFlatQuad(
-        string   name,
-        Vector2  a2, Vector2 b2,
-        float    width,
-        System.Func<float, float, float> getY,
-        float    yOffset,
-        Material mat,
-        Transform parent)
-    {
-        BuildFlatQuadOffset(name, a2, b2, width, 0f, getY, yOffset, mat, parent);
-    }
-
-    /// Same but laterally shifted by `lateralOffset` (positive = right of direction A→B).
-    private void BuildFlatQuadOffset(
-        string   name,
-        Vector2  a2, Vector2 b2,
-        float    width,
-        float    lateralOffset,
-        System.Func<float, float, float> getY,
-        float    yOffset,
-        Material mat,
-        Transform parent)
+    private void AddFlatStrip(
+        MeshBatcher batcher,
+        Vector2 a2, Vector2 b2,
+        float width,
+        float lateralOffset,
+        float yOffset)
     {
         float len = Vector2.Distance(a2, b2);
         if (len < MinSegLen) return;
 
-        Vector2 dir2  = (b2 - a2).normalized;
-        Vector2 right2 = new Vector2(dir2.y, -dir2.x); // 90° CW
+        Vector2 dir2   = (b2 - a2).normalized;
+        Vector2 right2 = new Vector2(dir2.y, -dir2.x);
 
-        // Center line of this strip, offset laterally
         Vector2 ca = a2 + right2 * lateralOffset;
         Vector2 cb = b2 + right2 * lateralOffset;
 
         float hw = width * 0.5f;
-
-        // Overlap endpoints slightly to hide seams at intersections
-        const float ovlp = 0.2f;
+        const float ovlp = 0.3f;
         Vector2 ea = ca - dir2 * ovlp;
         Vector2 eb = cb + dir2 * ovlp;
 
-        Vector3 v0 = ToV3(ea - right2 * hw, getY, yOffset);
-        Vector3 v1 = ToV3(ea + right2 * hw, getY, yOffset);
-        Vector3 v2 = ToV3(eb - right2 * hw, getY, yOffset);
-        Vector3 v3 = ToV3(eb + right2 * hw, getY, yOffset);
+        // Looking from above (+Y), CCW order is:
+        // leftStart -> leftEnd -> rightEnd -> rightStart
+        Vector3 v0 = ToV3(ea - right2 * hw, yOffset);
+        Vector3 v1 = ToV3(eb - right2 * hw, yOffset);
+        Vector3 v2 = ToV3(eb + right2 * hw, yOffset);
+        Vector3 v3 = ToV3(ea + right2 * hw, yOffset);
 
-        Vector3 mid = (v0 + v1 + v2 + v3) * 0.25f;
-
-        Mesh mesh = new Mesh { name = name + "_M" };
-        mesh.vertices  = new[] { v0 - mid, v1 - mid, v2 - mid, v3 - mid };
-        mesh.triangles = new[] { 0, 2, 1, 1, 2, 3 };
-        mesh.uv        = new Vector2[] { new Vector2(0,0), new Vector2(1,0), new Vector2(0,1), new Vector2(1,1) };
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
-
-        var go  = new GameObject(name);
-        go.transform.SetParent(parent, false);
-        go.transform.position = mid;
-
-        go.AddComponent<MeshFilter>().sharedMesh     = mesh;
-        go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+        batcher.AddQuad(v0, v1, v2, v3, new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0));
     }
 
-    /// Render dashed center line markings along a road segment.
-    private void RenderDashedLine(
-        string name,
+    private void AddDashedLine(
+        MeshBatcher batcher,
         Vector2 a2, Vector2 b2,
         float dashW, float dashLen, float dashGap,
-        float worldY,
-        Material mat,
-        Transform parent)
+        float worldY)
     {
         float totalLen = Vector2.Distance(a2, b2);
         if (totalLen < dashLen) return;
 
-        Vector2 dir = (b2 - a2).normalized;
-        float traveled = dashLen * 0.5f; // start offset
-        int di = 0;
+        Vector2 dir    = (b2 - a2).normalized;
+        Vector2 right2 = new Vector2(dir.y, -dir.x);
+        float hw       = dashW * 0.5f;
 
-        while (traveled + dashLen < totalLen)
+        float traveled = dashLen * 0.5f;
+        int count = 0;
+
+        while (traveled + dashLen < totalLen && count < 250)
         {
             Vector2 da = a2 + dir * traveled;
             Vector2 db = a2 + dir * (traveled + dashLen);
 
-            Vector3 va = new Vector3(da.x, worldY, da.y);
-            Vector3 vb = new Vector3(db.x, worldY, db.y);
+            // Looking from above (+Y), CCW order
+            Vector3 v0 = new Vector3(da.x - right2.x * hw, worldY, da.y - right2.y * hw);
+            Vector3 v1 = new Vector3(db.x - right2.x * hw, worldY, db.y - right2.y * hw);
+            Vector3 v2 = new Vector3(db.x + right2.x * hw, worldY, db.y + right2.y * hw);
+            Vector3 v3 = new Vector3(da.x + right2.x * hw, worldY, da.y + right2.y * hw);
 
-            Vector2 right2 = new Vector2(dir.y, -dir.x);
-            float hw = dashW * 0.5f;
-            Vector3 v0 = va - new Vector3(right2.x, 0, right2.y) * hw;
-            Vector3 v1 = va + new Vector3(right2.x, 0, right2.y) * hw;
-            Vector3 v2 = vb - new Vector3(right2.x, 0, right2.y) * hw;
-            Vector3 v3 = vb + new Vector3(right2.x, 0, right2.y) * hw;
-            Vector3 mid = (v0 + v1 + v2 + v3) * 0.25f;
-
-            Mesh mesh = new Mesh { name = $"{name}_{di}_M" };
-            mesh.vertices  = new[] { v0 - mid, v1 - mid, v2 - mid, v3 - mid };
-            mesh.triangles = new[] { 0, 2, 1, 1, 2, 3 };
-            mesh.uv        = new Vector2[] { Vector2.zero, Vector2.right, Vector2.up, Vector2.one };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-
-            var go = new GameObject($"{name}_{di}");
-            go.transform.SetParent(parent, false);
-            go.transform.position = mid;
-            go.AddComponent<MeshFilter>().sharedMesh = mesh;
-            go.AddComponent<MeshRenderer>().sharedMaterial = mat;
+            batcher.AddQuad(v0, v1, v2, v3, Vector2.zero, Vector2.up, Vector2.one, Vector2.right);
 
             traveled += dashLen + dashGap;
-            di++;
-
-            // Cap dashes per segment to avoid runaway memory on very long roads
-            if (di > 200) break;
+            count++;
         }
     }
 
-    /// Place a simple quad (for the intersection pad).
-    private static GameObject QuadFlat(string name, Material mat, Transform parent)
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        go.name = name;
-        go.transform.SetParent(parent, false);
-        go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        var r = go.GetComponent<MeshRenderer>();
-        r.sharedMaterial    = mat;
-        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        r.receiveShadows    = false;
-        var col = go.GetComponent<Collider>();
-        if (col) Object.Destroy(col);
-        return go;
-    }
-
-    // ── Street trees ──────────────────────────────────────────────────────────
-
-    private void SpawnStreetTrees(
-        string name,
+    private void AddStreetTrees(
         Vector2 a2, Vector2 b2,
         float lateralOffset,
         float spacing)
@@ -550,49 +493,41 @@ public class RoadGenerator
         Vector2 dir   = (b2 - a2).normalized;
         Vector2 right = new Vector2(dir.y, -dir.x);
 
-        float dist  = spacing * 0.5f;
-        int   index = 0;
-
-        // Trees on both sides
+        float dist = spacing * 0.5f;
         float[] sides = { -lateralOffset, lateralOffset };
+        int count = 0;
 
-        while (dist < totalLen && index < 80) // cap trees per segment
+        while (dist < totalLen && count < 50)
         {
             Vector2 pt = a2 + dir * dist;
 
             foreach (float side in sides)
             {
                 Vector2 treePos = pt + right * side;
-                float   ty      = GetY(treePos.x, treePos.y);
+                float ty = GetY(treePos.x, treePos.y) + SidewalkY;
 
-                // Trunk
-                var trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                trunk.name = $"{name}_T_{index}";
-                trunk.transform.SetParent(_treesRoot, false);
-                trunk.transform.position   = new Vector3(treePos.x, ty + TreeTrunkHeight * 0.5f, treePos.y);
-                trunk.transform.localScale = new Vector3(TreeTrunkRadius * 2f, TreeTrunkHeight, TreeTrunkRadius * 2f);
-                ApplyRdr(trunk, _matTreeTrunk);
-                DestroyColl(trunk);
+                // Rounded organic tree trunk with smooth normals
+                _bTreeTrunk.AddCylinder(
+                    new Vector3(treePos.x, ty, treePos.y),
+                    TreeTrunkRadius,
+                    TreeTrunkHeight,
+                    12);
 
-                // Canopy
-                var canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                canopy.name = $"{name}_C_{index}";
-                canopy.transform.SetParent(_treesRoot, false);
-                canopy.transform.position   = new Vector3(treePos.x, ty + TreeTrunkHeight + TreeCanopyOffsetY, treePos.y);
-                canopy.transform.localScale = Vector3.one * (TreeCanopyRadius * 2f);
-                ApplyRdr(canopy, _matTreeCanopy);
-                DestroyColl(canopy);
+                // Rounded organic spherical canopy with smooth outward normals
+                _bTreeCanopy.AddCanopy(
+                    new Vector3(treePos.x, ty + TreeTrunkHeight + TreeCanopyRadius * 0.8f, treePos.y),
+                    Vector3.one * TreeCanopyRadius,
+                    8,
+                    12);
             }
 
-            dist  += spacing;
-            index++;
+            dist += spacing;
+            count++;
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private Vector3 ToV3(Vector2 p, System.Func<float, float, float> getY, float yOff)
-        => new Vector3(p.x, getY(p.x, p.y) + yOff, p.y);
+    private Vector3 ToV3(Vector2 p, float yOff)
+        => new Vector3(p.x, GetY(p.x, p.y) + yOff, p.y);
 
     private float GetY(float x, float z)
         => (_terrainGen != null ? _terrainGen.SampleHeight(x, z) : 0f);
@@ -603,37 +538,13 @@ public class RoadGenerator
         return GetY(m.x, m.y);
     }
 
-    private static void ApplyRdr(GameObject go, Material mat)
+    private MeshBatcher BatcherForType(string type) => type switch
     {
-        var r = go.GetComponent<Renderer>();
-        if (r == null) return;
-        r.sharedMaterial    = mat;
-        r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        r.receiveShadows    = false;
-    }
-
-    private static void DestroyColl(GameObject go)
-    {
-        var c = go.GetComponent<Collider>();
-        if (c) Object.Destroy(c);
-    }
-
-    private Transform RootForType(string type) => type switch
-    {
-        "arterial"   => _arterialsRoot,
-        "collector"  => _collectorsRoot,
-        "pedestrian" => _pedestrianRoot,
-        "cycle"      => _cycleRoot,
-        _            => _localRoot,
-    };
-
-    private Material MatForType(string type) => type switch
-    {
-        "arterial"   => _matArterial,
-        "collector"  => _matCollector,
-        "pedestrian" => _matPedestrian,
-        "cycle"      => _matCycleway,
-        _            => _matLocal,
+        "arterial"   => _bArterial,
+        "collector"  => _bCollector,
+        "pedestrian" => _bPedestrian,
+        "cycle"      => _bCycleway,
+        _            => _bLocal,
     };
 
     private static float DefaultWidth(string type) => type switch

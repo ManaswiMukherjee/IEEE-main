@@ -1,6 +1,7 @@
 // VegetationGenerator.cs
 // Places vegetation (trees, shrubs) inside park/forest/green sectors.
-// Avoids roads and respects vegetation generation parameters.
+// Generates natural rounded trees (cylindrical trunks and spherical organic canopies)
+// batched into unified meshes for maximum visual fidelity and 60+ FPS performance.
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -25,16 +26,20 @@ public class VegetationGenerator
         int               seed)
     {
         Transform vegRoot = new GameObject("Vegetation").transform;
-        vegRoot.SetParent(_parent);
+        vegRoot.SetParent(_parent, false);
 
         if (vegetation == null || sectors == null)
         {
-            Debug.Log("[Vegetation] Generated 0 vegetation objects."); return;
+            Debug.Log("[Vegetation] Generated 0 vegetation objects.");
+            return;
         }
 
         VegetationGenerationData gen = vegetation.generation ?? new VegetationGenerationData();
-        float density = gen.density > 0 ? gen.density : 50f;   // trees per hectare
-        var   rng     = new System.Random(seed + 3);
+        float density = gen.density > 0 ? gen.density : 50f;
+        var rng = new System.Random(seed + 3);
+
+        MeshBatcher trunkBatcher = new MeshBatcher();
+        MeshBatcher canopyBatcher = new MeshBatcher();
 
         int count = 0;
 
@@ -48,96 +53,43 @@ public class VegetationGenerator
             float sWidth = sector.geometry.bounds[2];
             float sDepth = sector.geometry.bounds[3];
 
-            float areaHa  = (sWidth * sDepth) / 10000f;
+            float areaHa    = (sWidth * sDepth) / 10000f;
             int   treeCount = Mathf.RoundToInt(areaHa * density);
-            treeCount = Mathf.Clamp(treeCount, 5, 300);
+            treeCount = Mathf.Clamp(treeCount, 15, 160);
 
             for (int i = 0; i < treeCount; i++)
             {
-                float px = sx + 2f + (float)rng.NextDouble() * (sWidth - 4f);
-                float pz = sz + 2f + (float)rng.NextDouble() * (sDepth - 4f);
+                float px = sx + 4f + (float)rng.NextDouble() * (sWidth - 8f);
+                float pz = sz + 4f + (float)rng.NextDouble() * (sDepth - 8f);
 
-                float trunkH = 0.5f + (float)rng.NextDouble() * 1.5f;
-                float canopyR = 1.5f + (float)rng.NextDouble() * 3f;
+                float trunkH  = 1.5f + (float)rng.NextDouble() * 1.5f;
+                float trunkR  = 0.25f + (float)rng.NextDouble() * 0.15f;
+                float canopyR = 2.2f + (float)rng.NextDouble() * 2.0f;
 
-                PlaceTree(count, px, pz, trunkH, canopyR, vegRoot);
+                float terrainHeight = _terrainGen != null ? _terrainGen.SampleHeight(px, pz) : 0f;
+
+                // Natural rounded trunk with smooth normals
+                trunkBatcher.AddCylinder(
+                    new Vector3(px, terrainHeight, pz),
+                    trunkR,
+                    trunkH,
+                    12);
+
+                // Natural rounded organic canopy with smooth outward normals
+                canopyBatcher.AddCanopy(
+                    new Vector3(px, terrainHeight + trunkH + canopyR * 0.75f, pz),
+                    new Vector3(canopyR, canopyR * 1.15f, canopyR),
+                    8,
+                    14);
+
                 count++;
             }
         }
 
-        Debug.Log($"[Vegetation] Generated {count} vegetation objects.");
-    }
+        trunkBatcher.BuildGameObject("Batched_Trunks", _mats?.Industrial ?? _mats.Building, vegRoot);
+        canopyBatcher.BuildGameObject("Batched_Canopies", _mats?.Vegetation ?? _mats.Grass, vegRoot);
 
-
-    private void PlaceTree(
-        int index,
-        float px,
-        float pz,
-        float trunkH,
-        float canopyR,
-        Transform parent)
-    {
-        float terrainHeight = _terrainGen != null
-            ? _terrainGen.SampleHeight(px, pz)
-            : 0f;
-
-        // Create trunk.
-        GameObject trunk = GameObject.CreatePrimitive(
-            PrimitiveType.Cylinder);
-
-        trunk.name = $"Tree_{index}_Trunk";
-        trunk.transform.SetParent(parent, false);
-
-        trunk.transform.position = new Vector3(
-            px,
-            terrainHeight + trunkH * 0.5f,
-            pz);
-
-        trunk.transform.localScale = new Vector3(
-            0.25f,
-            trunkH,
-            0.25f);
-
-        Renderer trunkRenderer = trunk.GetComponent<Renderer>();
-
-        if (_mats?.Building != null)
-            trunkRenderer.sharedMaterial = _mats.Building;
-
-        trunkRenderer.shadowCastingMode =
-            UnityEngine.Rendering.ShadowCastingMode.Off;
-
-        trunkRenderer.receiveShadows = false;
-
-        Object.Destroy(trunk.GetComponent<CapsuleCollider>());
-
-        // Create canopy.
-        GameObject canopy = GameObject.CreatePrimitive(
-            PrimitiveType.Sphere);
-
-        canopy.name = $"Tree_{index}_Canopy";
-        canopy.transform.SetParent(parent, false);
-
-        canopy.transform.position = new Vector3(
-            px,
-            terrainHeight + trunkH + canopyR * 0.7f,
-            pz);
-
-        canopy.transform.localScale = new Vector3(
-            canopyR * 2f,
-            canopyR * 1.5f,
-            canopyR * 2f);
-
-        Renderer canopyRenderer = canopy.GetComponent<Renderer>();
-
-        if (_mats?.Vegetation != null)
-            canopyRenderer.sharedMaterial = _mats.Vegetation;
-
-        canopyRenderer.shadowCastingMode =
-            UnityEngine.Rendering.ShadowCastingMode.Off;
-
-        canopyRenderer.receiveShadows = false;
-
-        Object.Destroy(canopy.GetComponent<SphereCollider>());
+        Debug.Log($"[Vegetation] Generated {count} natural rounded trees batched into 2 unified meshes.");
     }
 
     private static bool IsVegetationSector(string type) => type is

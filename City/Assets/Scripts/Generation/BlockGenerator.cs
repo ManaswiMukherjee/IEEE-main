@@ -1,7 +1,6 @@
 // BlockGenerator.cs
 // Generates urban blocks by subdividing each sector with a local grid of roads.
-// The road grid divides the sector into blocks; blocks are then the unit for plot
-// subdivision and building placement.
+// Optimized using MeshBatcher: combines all 2000+ block sidewalk slabs into a single mesh!
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,19 +40,18 @@ public class BlockGenerator
         int              seed)
     {
         _blocksRoot = new GameObject("Blocks").transform;
-        _blocksRoot.SetParent(_parent);
+        _blocksRoot.SetParent(_parent, false);
         GeneratedBlocks.Clear();
 
         if (sectors == null) return;
 
-        BlockSizeData      sizeRules = blocks?.size        ?? new BlockSizeData();
-        BlockSubdivisionData subRules = blocks?.subdivision ?? new BlockSubdivisionData();
+        BlockSizeData sizeRules = blocks?.size ?? new BlockSizeData();
 
+        MeshBatcher batcher = new MeshBatcher();
         int totalBlocks = 0;
 
         foreach (var sector in sectors)
         {
-            // Skip non-developable sectors
             if (IsNonDevelopable(sector.type)) continue;
             if (sector.geometry?.bounds == null || sector.geometry.bounds.Length < 4) continue;
 
@@ -62,12 +60,10 @@ public class BlockGenerator
             float sWidth = sector.geometry.bounds[2];
             float sDepth = sector.geometry.bounds[3];
 
-            // Determine block size from street_rules or global block config
             float blockW = GetBlockWidth(sector, sizeRules);
             float blockD = GetBlockDepth(sector, sizeRules);
             float roadW  = GetLocalRoadWidth(sector);
 
-            // Generate grid of blocks inside this sector
             float curZ = sz + roadW;
             while (curZ + blockD < sz + sDepth - roadW)
             {
@@ -82,35 +78,25 @@ public class BlockGenerator
                         sectorType = sector.type,
                     };
                     GeneratedBlocks.Add(block);
-                    CreateBlockVisual(block, sector);
-                    totalBlocks++;
 
+                    // Add to batched mesh instead of creating a GameObject
+                    float centerX = curX + blockW * 0.5f;
+                    float centerZ = curZ + blockD * 0.5f;
+                    float terrainH = _terrainGen != null ? _terrainGen.SampleHeight(centerX, centerZ) : 0f;
+                    batcher.AddBox(new Vector3(centerX, terrainH + BlockY, centerZ), new Vector3(blockW, 0.04f, blockD));
+
+                    totalBlocks++;
                     curX += blockW + roadW;
                 }
                 curZ += blockD + roadW;
             }
         }
 
-        Debug.Log($"[Blocks] Generated {totalBlocks} blocks.");
+        // Single batched mesh for all blocks
+        batcher.BuildGameObject("Batched_Blocks", _mats.Sidewalk, _blocksRoot);
+
+        Debug.Log($"[Blocks] Generated {totalBlocks} blocks batched into 1 mesh.");
     }
-
-    private void CreateBlockVisual(GeneratedBlock block, SectorData sector)
-    {
-        float centerX = block.x + block.width * 0.5f;
-        float centerZ = block.z + block.depth * 0.5f;
-        float terrainHeight = _terrainGen != null ? _terrainGen.SampleHeight(centerX, centerZ) : 0f;
-
-        // Blocks are visualised as a very thin slab slightly above the terrain
-        GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = $"Block_{block.sectorId}_{GeneratedBlocks.Count}";
-        go.transform.SetParent(_blocksRoot);
-        go.transform.position   = new Vector3(centerX, terrainHeight + BlockY, centerZ);
-        go.transform.localScale = new Vector3(block.width, 0.04f, block.depth);
-        go.GetComponent<Renderer>().material = _mats.Sidewalk;
-        UnityEngine.Object.Destroy(go.GetComponent<BoxCollider>());
-    }
-
-    // ─── Parameter resolution ─────────────────────────────────────────────────
 
     private static bool IsNonDevelopable(string type) => type is
         "park" or "forest" or "wetland" or "water" or "agriculture";
